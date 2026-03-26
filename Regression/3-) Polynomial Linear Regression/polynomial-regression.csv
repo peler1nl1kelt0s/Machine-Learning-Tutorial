@@ -1,4 +1,4 @@
-araba_fiyat;araba_max_hiz
+car_price;max_speed
 60;180
 70;180
 80;200
