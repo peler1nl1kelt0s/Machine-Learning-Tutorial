@@ -23,7 +23,10 @@ Predicting which category a data point belongs to.
 
 | # | Algorithm | Key Idea |
 |---|-----------|----------|
-| 1 | Logistic Regression | Model class probabilities using the sigmoid function |
+| 1 | Logistic Regression | Binary classification via sigmoid; implemented from scratch + sklearn |
+| 2 | K-Nearest Neighbours (KNN) | Classify by majority vote among the K closest training samples |
+| 3 | Support Vector Machine (SVM) | Find the maximum-margin hyperplane separating two classes |
+| 4 | Naive Bayes | Probabilistic classifier using Bayes' theorem with feature independence assumption |
 
 ---
 
@@ -31,8 +34,8 @@ Predicting which category a data point belongs to.
 
 - **Language:** Python 3
 - **Main Library:** [scikit-learn](https://scikit-learn.org/)
-- **Utilities:** NumPy, Matplotlib
+- **Utilities:** NumPy, Matplotlib, Pandas
 
 ---
 
-> Detailed explanations, equations, and code examples for each algorithm can be found inside the respective folder's `.md` file.
+> Each algorithm folder contains a Jupyter notebook with step-by-step code and inline explanations, alongside the theory reference in the folder's `.md` file.

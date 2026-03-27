@@ -196,9 +196,9 @@ Common criteria:
 
 > Note: **Entropy / Information Gain** is mainly used for classification trees. For regression trees, MSE/variance is the standard focus.
 
-![Screenshot 2026-03-24 at 09.33.39.png](images/Screenshot_2026-03-24_at_09.33.39.png)
+![image2.png](images/image2.png)
 
-![Screenshot 2026-03-24 at 10.21.17.png](images/Screenshot_2026-03-24_at_10.21.17.png)
+![image3.png](images/image3.png)
 
 ### Pros and cons
 
@@ -234,10 +234,10 @@ A single decision tree has high variance. Random Forest reduces variance by addi
 Averaging many diverse trees tends to produce more stable predictions.
 
 **Regression example**
-![image.png](images/image.png)
+![image4.png](images/image4.png)
 
 **Same ensemble idea (classification example)**
-![image.png](images/image_1.png)
+![image1.png](images/image1.png)
 
 ### Python Implementation
 
