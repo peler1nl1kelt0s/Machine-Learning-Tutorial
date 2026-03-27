@@ -24,7 +24,11 @@ If `σ(z) ≥ 0.5` → predict class `1`; otherwise predict class `0`.
 
 A computation graph is a visual way to express mathematical operations as a directed graph of nodes. Each node represents an operation; edges carry values between them. This makes it easy to reason about the **forward pass** (computing the output) and the **backward pass** (computing gradients).
 
-For logistic regression, the forward pass is:
+![Computation graph example: c = √(a² + b²)](images/image.png)
+
+For logistic regression, the full forward pass looks like this — pixel inputs are multiplied by learned weights, summed with a bias, passed through the sigmoid, and produce a probability output:
+
+![Logistic regression forward pass: inputs → weights → sum → sigmoid → probability](images/image%201.png)
 
 ```
 z = wᵀx + b          → linear combination
@@ -67,6 +71,8 @@ These gradients tell us in which direction (and how steeply) the cost increases 
 
 ### Gradient Descent (Updating Weights)
 
+![Gradient descent weight update rule](images/image%203.png)
+
 ```
 w ← w − α · dw
 b ← b − α · db
@@ -95,6 +101,8 @@ L(y, ŷ) = −y·log(ŷ) − (1−y)·log(1−ŷ)
 This function penalizes confident wrong predictions very heavily.
 
 ### Why Sigmoid? Key Properties
+
+![Sigmoid function formula](images/image%202.png)
 
 1. **Probabilistic output** — result is always in `(0, 1)`, interpretable as probability.
 2. **Differentiable** — essential for gradient descent; its derivative is `σ(z)·(1 − σ(z))`.
@@ -134,6 +142,10 @@ d = √(Σ (xᵢ − yᵢ)²)
 - **Small K (e.g. 1):** Very sensitive to noise — a single outlier can change the prediction. Low bias, high variance → **overfitting**.
 - **Large K:** Smoother decision boundary but may include irrelevant neighbours. High bias, low variance → **underfitting**.
 - **Best practice:** Plot accuracy vs. K on the test set and pick the elbow (the point where accuracy stops improving significantly). In this notebook, `K = 8` gives the best result.
+
+The plot below shows the actual breast cancer data — red = Malignant, green = Benign. KNN uses the spatial separation between these clusters to classify new samples:
+
+![Breast cancer dataset: Malignant vs. Benign scatter plot (radius_mean vs texture_mean)](images/plot.png)
 
 ### Normalization is Critical for KNN
 
@@ -186,6 +198,8 @@ scikit-learn's `SVC` uses `kernel='rbf'` by default.
 Naive Bayes is a **probabilistic classifier** based on Bayes' Theorem. It is called *naive* because it assumes all features are **conditionally independent** given the class label — a simplification that rarely holds in practice but works surprisingly well.
 
 ### Bayes' Theorem
+
+![Bayes' theorem with labelled terms: Posterior, Likelihood, Class Prior Probability, Predictor Prior Probability, and the independence expansion](images/image%204.png)
 
 ```
 P(class | features) = P(features | class) × P(class) / P(features)
