@@ -1,6 +1,6 @@
 # Machine Learning
 
-A structured collection of study notes and hands-on implementations covering foundational machine learning algorithms. Each topic is organized in its own folder with a dedicated markdown file explaining the theory, key concepts, and scikit-learn code snippets.
+A structured collection of study notes and hands-on implementations covering foundational machine learning algorithms. Each topic is organized in its own folder with a dedicated markdown file explaining the intuition, the math behind it (with step-by-step derivations and figures built from the datasets in this repo), and scikit-learn code snippets.
 
 ---
 
@@ -27,6 +27,9 @@ Predicting which category a data point belongs to.
 | 2 | K-Nearest Neighbours (KNN) | Classify by majority vote among the K closest training samples |
 | 3 | Support Vector Machine (SVM) | Find the maximum-margin hyperplane separating two classes |
 | 4 | Naive Bayes | Probabilistic classifier using Bayes' theorem with feature independence assumption |
+| 5 | Decision Tree Classification | Split on the feature and threshold that reduce entropy (or Gini) the most |
+| 6 | Random Forest Classification | Many randomized trees on bootstrap sub-samples, combined by majority vote |
+| 7 | Confusion Matrix & Metrics | Accuracy, precision, recall, F1, ROC/AUC — measuring which mistakes a classifier makes |
 
 ---
 
