@@ -1,5 +1,7 @@
 # Classification
 
+🇹🇷 Türkçe sürüm: [Sınıflandırma](Classification.tr.md)
+
 > [!NOTE]
 > **Goal:** Understand six classification algorithms from the inside: the intuition, the math that makes each one work, and the code. Every figure and number on this page is computed from the Wisconsin Breast Cancer dataset in my Machine Learning repo, so all of it can be reproduced.
 

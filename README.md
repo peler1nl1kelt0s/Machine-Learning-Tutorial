@@ -1,5 +1,7 @@
 # Machine Learning
 
+🇹🇷 [Türkçe](README.tr.md)
+
 A structured collection of study notes and hands-on implementations covering foundational machine learning algorithms. Each topic is organized in its own folder with a dedicated markdown file explaining the intuition, the math behind it (with step-by-step derivations and figures built from the datasets in this repo), and scikit-learn code snippets.
 
 ---

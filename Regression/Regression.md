@@ -1,5 +1,7 @@
 # Regression
 
+🇹🇷 Türkçe sürüm: [Regresyon](Regression.tr.md)
+
 > [!NOTE]
 > **Goal:** Explain linear regression and the core regression models in a clear, beginner-friendly way: first the intuition, then the math behind it, then the code. Every figure and number on this page comes from the small datasets in my Machine Learning repo, so everything here can be reproduced.
 
