@@ -32,6 +32,14 @@ Predicting which category a data point belongs to.
 | 5 | Decision Tree Classification | Split on the feature and threshold that reduce entropy (or Gini) the most |
 | 6 | Random Forest Classification | Many randomized trees on bootstrap sub-samples, combined by majority vote |
 | 7 | Confusion Matrix & Metrics | Accuracy, precision, recall, F1, ROC/AUC — measuring which mistakes a classifier makes |
+| 8 | K-means Clustering | Assign unlabelled points to centroids and reduce within-cluster squared error |
+| 9 | Hierarchical Clustering | Merge groups by linkage and cut a dendrogram |
+| 10 | NLP: Sentiment Classification | Turn text into sparse BoW/TF-IDF features and compare models with CV |
+| 11 | PCA (Principal Component Analysis) | Compress high-dimensional data onto orthogonal directions of maximum variance |
+| 12 | Model Selection (K-Fold & Grid Search CV) | Tune hyperparameters cleanly with Stratified K-Fold CV inside a Pipeline |
+| 13 | Recommendation Systems | Content-based, cosine collaborative filtering, and SVD latent factors |
+
+**[Classification: 10 executed notebooks, code, figures and setup](Classification/README.md).** The clustering chapters cover unsupervised learning. Notebooks include English/Turkish guidance and saved real outputs.
 
 ---
 

@@ -32,6 +32,14 @@ Bir veri noktasının hangi kategoriye ait olduğunu tahmin etmek.
 | 5 | Karar Ağacı ile Sınıflandırma | Entropiyi (ya da Gini değerini) en çok azaltan öznitelik ve eşikte böl |
 | 6 | Rastgele Orman ile Sınıflandırma | Bootstrap alt örneklemlerinde eğitilen rastgele ağaçlar çoğunluk oyuyla birleşir |
 | 7 | Karmaşıklık Matrisi ve Metrikler | Doğruluk, precision, recall, F1, ROC/AUC — sınıflandırıcının hangi hataları yaptığını ölçmek |
+| 8 | K-means Kümeleme | Etiketsiz noktaları en yakın merkeze ata; kareli uzaklık toplamını azalt |
+| 9 | Hiyerarşik Kümeleme | Grupları linkage kuralıyla birleştir; dendrogramı kes |
+| 10 | NLP: Duygu Sınıflandırma | Metni sparse BoW/TF-IDF özelliklerine dönüştür; modelleri CV ile karşılaştır |
+| 11 | PCA (Temel Bileşen Analizi) | Yüksek boyutlu veriyi en büyük varyans yönlerine indirge ve görselleştir |
+| 12 | Model Seçimi (K-Katlı CV ve Grid Search CV) | Hiperparametreleri Pipeline içinde sızıntısız çapraz doğrulamayla seç |
+| 13 | Öneri Sistemleri | İçerik tabanlı, kosinüs işbirlikçi filtreleme ve SVD gizli faktör modelleri |
+
+**[Classification: 10 çalıştırılmış notebook, kodlar, grafikler ve kurulum](Classification/README.tr.md).** Kümeleme bölümleri gözetimsiz öğrenmedir. Notebook’larda Türkçe ve İngilizce açıklamalar, kayıtlı gerçek çıktılar bulunur.
 
 ---
 
@@ -43,4 +51,4 @@ Bir veri noktasının hangi kategoriye ait olduğunu tahmin etmek.
 
 ---
 
-> Her algoritma klasöründe adım adım kod ve satır içi açıklamalar içeren bir Jupyter notebook bulunur; teori ise klasörün `.md` dosyasındadır. Notebook'lar İngilizcedir.
+> Her algoritma klasöründe adım adım kod ve satır içi açıklamalar içeren bir Jupyter notebook bulunur; teori ise klasörün `.md` dosyasındadır. Classification notebook’larında Türkçe açıklamalar da bulunur.

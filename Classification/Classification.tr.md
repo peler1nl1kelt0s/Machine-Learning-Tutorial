@@ -3,7 +3,9 @@
 🇬🇧 English version: [Classification](Classification.md)
 
 > [!NOTE]
-> **Amaç:** Altı sınıflandırma algoritmasını içeriden anlamak: sezgi, her birini çalıştıran matematik ve kod. Bu sayfadaki her grafik ve her sayı Machine Learning repomdaki Wisconsin Meme Kanseri veri setinden hesaplandı; yani hepsi yeniden üretilebilir.
+> **Amaç:** Sınıflandırma algoritmalarından kümelemeye, NLP, PCA, model seçimi ve öneri sistemlerine kadar temel makine öğrenmesi yöntemlerini sezgi, matematik ve çalıştırılabilir kodla anlamak.
+
+**Çalıştırılmış uygulamalar:** [10 notebook, çıktılar ve kurulum](README.tr.md). Her bölümün başındaki bağlantı kodu, tabloları ve grafikleri birlikte açar.
 
 **İçindekiler**
 
@@ -16,6 +18,12 @@
 - [6. Rastgele Orman ile Sınıflandırma](#6-rastgele-orman-ile-sınıflandırma)
 - [7. Karmaşıklık Matrisi ve Değerlendirme Metrikleri](#7-karmaşıklık-matrisi-ve-değerlendirme-metrikleri)
 - [Algoritma Karşılaştırması](#algoritma-karşılaştırması)
+- [8. K-means Kümeleme](#8-k-means-kümeleme-gözetimsiz-öğrenme)
+- [9. Hiyerarşik Kümeleme](#9-hiyerarşik-kümeleme-hierarchical-clustering)
+- [10. Doğal Dil İşleme](#10-doğal-dil-i̇şleme-nlp-ve-metin-sınıflandırma)
+- [11. PCA — Temel Bileşen Analizi](#11-pca--temel-bileşen-analizi-principal-component-analysis)
+- [12. Model Seçimi: K-Katlı CV ve Grid Search CV](#12-model-seçimi-k-katlı-çapraz-doğrulama-ve-grid-search-cv)
+- [13. Öneri Sistemleri](#13-öneri-sistemleri-recommendation-systems)
 - [Kendini sına](#kendini-sına)
 
 ---
@@ -24,7 +32,7 @@
 
 Sınıflandırma, bir veri noktasının hangi **kategoriye** (sınıfa) ait olduğunu tahmin etme görevidir. Sürekli bir sayı tahmin eden regresyonun aksine (bkz. [Regresyon](../Regression/Regression.tr.md)), sınıflandırma ayrık bir etiket üretir — örneğin *Kötü huylu / İyi huylu*, *Spam / Spam değil* ya da *Kedi / Köpek*.
 
-Aşağıdaki bütün algoritmalar **Wisconsin Meme Kanseri veri seti** (Wisconsin Breast Cancer) üzerinde gösteriliyor (569 örnek, 30 sayısal öznitelik, ikili hedef: `M` = Malignant, kötü huylu → `1`; `B` = Benign, iyi huylu → `0`). Sınıflar dengeli değil: **357 iyi huylu (%62.7)** ve **212 kötü huylu (%37.3)**. Bu iki sayıyı aklında tut; Naive Bayes’te ve değerlendirme bölümünde yeniden karşımıza çıkacaklar.
+1–7. bölümlerdeki altı sınıflandırıcı ve değerlendirme **Wisconsin Meme Kanseri veri seti** (Wisconsin Breast Cancer) üzerinde gösteriliyor (569 örnek, 30 sayısal öznitelik, ikili hedef: `M` = Malignant, kötü huylu → `1`; `B` = Benign, iyi huylu → `0`). Sınıflar dengeli değil: **357 iyi huylu (%62.7)** ve **212 kötü huylu (%37.3)**. Bu iki sayıyı aklında tut; Naive Bayes’te ve değerlendirme bölümünde yeniden karşımıza çıkacaklar.
 
 Her algoritma aynı soruyu farklı bir fikirle yanıtlar:
 
@@ -38,13 +46,15 @@ graph TD
     E --> F["6 · Rastgele Orman<br>Birçok ağaç oy versin"]
 ```
 
-### Her notebook’un izlediği hat
+### 1–7. notebook’ların izlediği hat
 
 1. CSV dosyasını **yükle**; `id` ve boş `Unnamed: 32` sütunlarını at.
 2. Hedefi **kodla**: `M` → 1, `B` → 0.
-3. Öznitelikleri **normalize et** (uzaklık ve gradyan tabanlı modeller için kritik; bölüm 2’de açıklanıyor).
-4. Eğitim ve test kümelerine **ayır**.
-5. Eğitim kümesinde **eğit**, test kümesinde **puanla**.
+3. Önce eğitim ve test kümelerine **ayır**.
+4. Gereken öznitelikleri yalnız **eğitim verisinde öğrenilen** ölçekle normalize et; CV içinde ölçekleyiciyi her fold’da yeniden fit et.
+5. Model/hiperparametre seçimini eğitim içi CV ile yap; son modeli eğitim kümesinde **eğit**, ayrılmış test kümesinde **puanla**.
+
+> **Güncel notebook düzeni:** 1–7 aynı stratified %80/%20 ayrımını (`random_state=42`) kullanır. Aşağıdaki eski grafik ve örnek tabloların bir kısmı kendi başlıklarında belirtilen önceki ayrımlara aittir. Güncel ölçümlerin tamamı [notebook dizininde](README.tr.md) bulunur; eski örnek yüzdelerle doğrudan sıralama yapılmamalıdır.
 
 > [!NOTE]
 > Aşağıdaki görsellerin çoğu 30 öznitelikten yalnızca ikisini, `radius_mean` ve `texture_mean`, kullanıyor; çünkü iki boyut çizilebilir. Metinde verilen doğruluk değerleri, aksini söylemediğim sürece 30 özniteliğin tamamını kullanır.
@@ -52,6 +62,8 @@ graph TD
 ---
 
 ## 1. Lojistik Regresyon
+
+**Çalıştırılmış notebook:** [Lojistik Regresyon](1%29%20%20Logistic%20Regression%20Classification/Logistic%20Regression.ipynb)
 
 Adına rağmen Lojistik Regresyon bir regresyon değil, **sınıflandırma** algoritmasıdır. Bir örneğin belirli bir sınıfa ait olma olasılığını modeller ve **sigmoid fonksiyonu** ile 0 ile 1 arasında bir değer üretir.
 
@@ -211,13 +223,13 @@ z = w^{\top}X + b, \qquad \hat{y} = \sigma(z), \qquad J = \frac{1}{m}\sum_{i=1}^
 dz = \frac{\partial L}{\partial z} = \frac{\hat{y} - y}{\hat{y}(1 - \hat{y})}\cdot\hat{y}(1 - \hat{y}) = \hat{y} - y
 ```
 
-Skora göre gradyan yalnızca **tahmin eksi gerçek** değeridir. Tüm $`m`$ örnek üzerinden ortalama almak, notebook’ta kullanılan üç satırı verir:
+Skora göre gradyan yalnızca **tahmin eksi gerçek** değeridir. Tüm $`m`$ örnek üzerinden ortalama almak, sütun düzeninde şu üç satırı verir:
 
 ```math
 dz = \hat{y} - y, \qquad dw = \frac{1}{m}\,X\,dz^{\top}, \qquad db = \frac{1}{m}\sum_{i=1}^{m} dz_i
 ```
 
-(Burada $`X`$ matrisinde her örnek bir **sütundur**, boyutu 30 × m; notebook’un veriyi ayırdıktan sonra transpoze etmesinin nedeni bu.)
+(Bu türetimde her örnek bir **sütundur**, boyut 30 × m’dir. Güncel notebook eşdeğer satır düzenini, m × 30 boyutunu kullanır: ağırlık gradyanı `X.T @ (p-y) / m` olur; veri seti transpoze edilmez.)
 
 Bu gradyanlar bize maliyetin hangi yönde (ve ne kadar dik) arttığını söyler — biz de parametreleri **ters** yönde hareket ettiririz.
 
@@ -237,7 +249,7 @@ $`\alpha`$ (alfa) **öğrenme oranıdır (learning rate)** — her iterasyonda n
 |---|---|---|---|
 | 0.01 | 0.502 | %89.9 | %91.2 |
 | 0.1 | 0.223 | %94.3 | %95.6 |
-| **1.7** (notebook’taki değer) | **0.087** | **%98.2** | **%97.4** |
+| **1.7** (bu grafikteki ayar) | **0.087** | **%98.2** | **%97.4** |
 
 > [!TIP]
 > 1.7’lik bir öğrenme oranı kulağa çok büyük gelir; ama burada işe yarıyor, çünkü her öznitelik `[0, 1]` aralığına normalize edildi; bu da gradyanları küçük, maliyet yüzeyini düzgün tutuyor. Ölçeklenmemiş özniteliklerde aynı değer maliyeti patlatırdı. Doğru öğrenme oranı her zaman girdilerin ölçeğine bağlıdır.
@@ -268,41 +280,46 @@ Notebook, lojistik regresyonu NumPy ile **sıfırdan** yazar, sonra sonucu **sci
 ```python
 import numpy as np
 import pandas as pd
+from scipy.special import expit
 from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.pipeline import make_pipeline
+from sklearn.linear_model import LogisticRegression
 
-data = pd.read_csv("../datasets/data.csv").drop(columns=["id", "Unnamed: 32"])
-y = (data.diagnosis == "M").astype(int).values
-x = data.drop(columns="diagnosis")
-x = ((x - x.min()) / (x.max() - x.min())).values           # min-max normalizasyonu
-x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
+# Run from a numbered algorithm folder; full portable setup is in the notebook.
+data = pd.read_csv("../datasets/data.csv")
+x = data.drop(columns=["id", "diagnosis", "Unnamed: 32"])
+y = data.diagnosis.map({"B": 0, "M": 1})
+x_train, x_test, y_train, y_test = train_test_split(
+    x, y, test_size=0.2, stratify=y, random_state=42
+)
+scaler = MinMaxScaler().fit(x_train)
+A_train, A_test = scaler.transform(x_train), scaler.transform(x_test)
 
-def sigmoid(z):
-    return 1 / (1 + np.exp(-z))
-
-def train(X, y, alpha=1.7, iterations=1000):
-    m, n = X.shape                         # m örnek (satır), n öznitelik
-    w, b = np.full(n, 0.01), 0.0
+def train(X, y, alpha=1.0, iterations=4000):
+    w, b = np.zeros(X.shape[1]), 0.0
     for _ in range(iterations):
-        y_hat = sigmoid(X @ w + b)         # ileri geçiş
-        dz = y_hat - y                     # geri geçiş: tahmin eksi gerçek
-        w -= alpha * (X.T @ dz) / m
-        b -= alpha * dz.mean()
+        error = expit(X @ w + b) - y
+        dw, db = X.T @ error / len(y), error.mean()
+        w -= alpha * dw
+        b -= alpha * db
     return w, b
 
-w, b = train(x_train, y_train)
-y_pred = (sigmoid(x_test @ w + b) > 0.5).astype(int)
-print((y_pred == y_test).mean())           # 0.9737  (sıfırdan)
-
-from sklearn.linear_model import LogisticRegression
-lr = LogisticRegression(max_iter=5000).fit(x_train, y_train)
-print(lr.score(x_test, y_test))            # 0.9825  (scikit-learn)
+w, b = train(A_train, y_train.to_numpy())
+y_pred = (expit(A_test @ w + b) >= 0.5).astype(int)
+print((y_pred == y_test).mean())             # 0.973684... (NumPy)
+lr = make_pipeline(MinMaxScaler(), LogisticRegression(max_iter=3000, random_state=42))
+lr.fit(x_train, y_train)                     # scaler fitted on training rows only
+print(lr.score(x_test, y_test))              # 0.973684... (sklearn, L2)
 ```
 
-Sıfırdan yazılan model **%97.4**, scikit-learn **%98.2** test doğruluğuna ulaşıyor: 114 tümörde bir tümörlük fark. scikit-learn daha akıllı bir optimizasyon yöntemi kullanır ve varsayılan olarak L2 düzenlileştirme ekler.
+Güncel ortak ayrımda iki uygulama da **%97.37** test doğruluğuna ulaşır (114 örneğin 111’i). Eşit doğruluk, katsayıların eşit olduğu anlamına gelmez: NumPy örneğinde düzenlileştirme yoktur; sklearn L2 kullanır. Tam notebook sayısal gradyan kontrolünü ve kararlı çapraz entropi eğrisini de içerir. Yukarıdaki eski öğrenme oranı grafikleri kendi örnek deneylerine aittir.
 
 ---
 
 ## 2. K-En Yakın Komşu (KNN)
+
+**Çalıştırılmış notebook:** [K-En Yakın Komşu](2%29%20K-Nearest%20Neighbour%20%28KNN%29%20Classification/K-Nearest%20Neighbour%20%28KNN%29.ipynb)
 
 KNN basit, **parametrik olmayan** bir algoritmadır — bütün eğitim kümesini ezberler ve tahmini sorgu anında en yakın noktalara bakarak yapar. Hiçbir eğitim adımı yoktur; bu yüzden ona **tembel öğrenici (lazy learner)** denir.
 
@@ -356,7 +373,7 @@ d_r(p, q) = \Big(\sum_{j=1}^{n}\lvert p_j - q_j\rvert^{\,r}\Big)^{1/r} \qquad r 
 Eğri benim ayrımımda (70 / 30, `random_state=1`, 171 test tümörü) şunu söylüyor:
 
 - **K = 1** eğitim kümesinde %100 alır, çünkü her nokta kendi en yakın komşusudur; ama test kümesinde yalnızca %94.7. Aradaki fark aşırı öğrenmedir.
-- Test doğruluğu **K = 9 için tepe yapar (%97.1, 171 tümörün 166’sı)**. 7 ile 12 arasındaki her K bunun bir tümör yakınındadır; yani eğri orada düzdür. Notebook’ta **K = 8** kullanıyorum.
+- Test doğruluğu **K = 9 için tepe yapar (%97.1, 171 tümörün 166’sı)**. 7 ile 12 arasındaki her K bunun bir tümör yakınındadır; yani eğri orada düzdür. O eski örnekte **K = 8** kullanılmıştı; güncel notebook ortak %80/%20 ayrımında eğitim CV’siyle **K = 3** seçer.
 - K ≈ 20 sonrasında iki eğri birlikte aşağı kayar: model fazla pürüzsüzleşmektedir.
 
 > [!WARNING]
@@ -401,20 +418,26 @@ Ham değerlerde smoothness farkı, o özniteliğin neredeyse bütün aralığı 
 ```python
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import MinMaxScaler
-from sklearn.pipeline import make_pipeline
+from sklearn.pipeline import Pipeline
+from sklearn.model_selection import GridSearchCV, StratifiedKFold
 
-X = data.drop(columns="diagnosis").values                  # ham öznitelikler
-x_train, x_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=1)
-
-for k in range(1, 15):
-    knn = make_pipeline(MinMaxScaler(), KNeighborsClassifier(n_neighbors=k))
-    knn.fit(x_train, y_train)                              # ölçekleyici yalnızca eğitim kümesinde fit edilir
-    print(k, round(knn.score(x_test, y_test), 4))          # k = 8: 0.9649, k = 9: 0.9708
+# x_train/x_test are the raw, stratified 80/20 split from section 1.
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+pipeline = Pipeline([("scale", MinMaxScaler()), ("knn", KNeighborsClassifier())])
+search = GridSearchCV(pipeline, {"knn__n_neighbors": list(range(1, 26))},
+                      cv=cv, scoring="accuracy", n_jobs=1)
+search.fit(x_train, y_train)                 # each fold fits its own scaler
+knn = search.best_estimator_
+print(search.best_params_)                  # {'knn__n_neighbors': 3}
+print(search.best_score_)                   # 0.975824... (training CV)
+print(knn.score(x_test, y_test))             # 0.956140... (held-out test)
 ```
 
 ---
 
 ## 3. Destek Vektör Makinesi (SVM)
+
+**Çalıştırılmış notebook:** [Destek Vektör Makinesi](3%29%20Support%20Vector%20Machine%20%28SVM%29%20Classification/Support%20Vector%20Machine%20%28SVM%29.ipynb)
 
 SVM, iki sınıfı **en büyük marjla (maximum margin)** — her sınıfın en yakın veri noktaları arasındaki olabilecek en geniş boşlukla — ayıran **hiperdüzlemi** bulur. O en yakın noktalara **destek vektörleri (support vectors)** denir.
 
@@ -539,11 +562,22 @@ $`\alpha_i`$ değerlerinin çoğu tam sıfır çıkar. $`\alpha_i \gt 0`$ olan n
 
 ```python
 from sklearn.svm import SVC
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import GridSearchCV, StratifiedKFold
 
-svm = make_pipeline(MinMaxScaler(), SVC(kernel="rbf", C=1.0, gamma="scale", random_state=1))
-svm.fit(x_train, y_train)
-print(svm.score(x_test, y_test))           # 0.9708
-print(svm[-1].n_support_)                  # [41 45] -> 398 eğitim noktasının 86'sı destek vektörü
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+pipeline = Pipeline([("scale", MinMaxScaler()), ("svm", SVC(random_state=42))])
+grid = [
+    {"svm__kernel": ["linear"], "svm__C": [0.1, 1, 10]},
+    {"svm__kernel": ["rbf"], "svm__C": [0.1, 1, 10], "svm__gamma": ["scale", 0.1, 1]},
+]
+search = GridSearchCV(pipeline, grid, cv=cv, scoring="accuracy", n_jobs=1)
+search.fit(x_train, y_train)
+svm = search.best_estimator_
+print(search.best_params_)                  # C=10, gamma=1, kernel='rbf'
+print(svm.score(x_test, y_test))             # 0.973684...
+print(svm.named_steps["svm"].n_support_)     # [34 33]
 ```
 
 KNN gibi SVM de uzaklık ölçer; dolayısıyla ölçeklenmiş özniteliklere ihtiyaç duyar: ham veride aynı model yalnızca %91.8 alır.
@@ -551,6 +585,8 @@ KNN gibi SVM de uzaklık ölçer; dolayısıyla ölçeklenmiş özniteliklere ih
 ---
 
 ## 4. Naive Bayes
+
+**Çalıştırılmış notebook:** [Naive Bayes](4%29%20Naive%20Bayes%20Classification/Naive%20Bayes.ipynb)
 
 Naive Bayes, Bayes Teoremi’ne dayanan **olasılıksal bir sınıflandırıcıdır**. *Naive* (saf) denmesinin nedeni, sınıf etiketi verildiğinde bütün özniteliklerin **koşullu bağımsız** olduğunu varsaymasıdır — pratikte nadiren doğru olan ama şaşırtıcı derecede iyi çalışan bir sadeleştirme.
 
@@ -643,15 +679,18 @@ Bu veri setinde birçok öznitelik birbirinin neredeyse kopyası (radius, perime
 ```python
 from sklearn.naive_bayes import GaussianNB
 
-nb = GaussianNB().fit(x_train, y_train)
-print(nb.score(x_test, y_test))            # 0.9474
-print(nb.class_prior_)                     # eğitim kümesinde P(iyi huylu), P(kötü huylu)
-print(nb.theta_[:, 0], nb.var_[:, 0])      # ilk özniteliğin sınıf bazında ortalaması ve varyansı
+nb = GaussianNB().fit(x_train, y_train)      # continuous raw features; no scaler needed
+print(nb.score(x_test, y_test))             # 0.938596...
+print(nb.class_prior_)                      # [0.62637363 0.37362637]
+print(nb.theta_[:, 0])                      # class means of radius_mean
+print(nb.var_[:, 0])                        # smoothed class variances
 ```
 
 ---
 
 ## 5. Karar Ağacı ile Sınıflandırma
+
+**Çalıştırılmış notebook:** [Karar Ağacı](5%29%20Decision%20Tree%20Classification/Decision%20Tree.ipynb)
 
 **CART**, *Classification and Regression Trees* (sınıflandırma ve regresyon ağaçları) demektir: tek algoritma, iki iş. Regresyon sürümü [Regresyon](../Regression/Regression.tr.md) sayfasında anlatılıyor. Sınıflandırmada yalnızca iki şey değişir:
 
@@ -741,20 +780,35 @@ Neredeyse her zaman aynı bölmeleri seçerler. Gini logaritma gerektirmez; bu y
 ### Python uygulaması
 
 ```python
-from sklearn.tree import DecisionTreeClassifier, export_text
+from sklearn.tree import DecisionTreeClassifier, plot_tree
+from sklearn.model_selection import GridSearchCV, StratifiedKFold
+import matplotlib.pyplot as plt
 
-tree = DecisionTreeClassifier(random_state=42).fit(x_train, y_train)      # 30 özniteliğin tamamı
-print(tree.score(x_test, y_test))          # 0.9591
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+search = GridSearchCV(DecisionTreeClassifier(criterion="entropy", random_state=42),
+                      {"max_depth": [2, 3, 4, 5, None], "min_samples_leaf": [1, 3, 5]},
+                      cv=cv, scoring="accuracy", n_jobs=1)
+search.fit(x_train, y_train)
+tree = search.best_estimator_
+print(search.best_params_)                  # max_depth=4, min_samples_leaf=1
+print(tree.score(x_test, y_test))           # 0.929824...
 
-# yukarıda çizilen iki öznitelikli küçük ağaç
-X2 = data[["radius_mean", "texture_mean"]].values
-small = DecisionTreeClassifier(criterion="entropy", max_depth=2, random_state=42).fit(X2, y)
-print(export_text(small, feature_names=["radius_mean", "texture_mean"]))
+# A separate readable illustration, also fitted on training rows only.
+features = ["radius_mean", "texture_mean"]
+small_tree = DecisionTreeClassifier(max_depth=2, criterion="entropy", random_state=42)
+small_tree.fit(x_train[features], y_train)
+plt.figure(figsize=(12, 6))
+plot_tree(small_tree, feature_names=features, class_names=["Benign", "Malignant"],
+          filled=True, rounded=True, fontsize=10)
+plt.tight_layout()
+plt.show()
 ```
 
 ---
 
 ## 6. Rastgele Orman ile Sınıflandırma
+
+**Çalıştırılmış notebook:** [Rastgele Orman](6%29%20Random%20Forest%20Classification/Random%20Forest.ipynb)
 
 **Topluluk öğrenmesi (ensemble learning):** tek bir modele güvenmek yerine birçok model eğit ve yanıtlarını birleştir. Rastgele orman, karar ağaçlarından oluşan bir topluluktur.
 
@@ -817,17 +871,22 @@ P(\text{çoğunluk doğru}) = \sum_{k \gt B/2}\binom{B}{k}\,p^{k}(1 - p)^{B - k}
 
 ```python
 from sklearn.ensemble import RandomForestClassifier
+from sklearn.model_selection import cross_val_score, StratifiedKFold
 
-rf = RandomForestClassifier(n_estimators=100, random_state=42, oob_score=True)
+rf = RandomForestClassifier(n_estimators=200, oob_score=True, random_state=42, n_jobs=1)
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+print(cross_val_score(rf, x_train, y_train, cv=cv, scoring="accuracy").mean())  # 0.962637...
 rf.fit(x_train, y_train)
-print(rf.score(x_test, y_test))            # 0.9591
-print(rf.oob_score_)                       # 0.9573  (test kümesi kullanılmadan tahmin edildi)
-print(rf.feature_importances_)             # öznitelik başına bir değer, toplamları 1
+print(rf.score(x_test, y_test))              # 0.964912...
+print(rf.oob_score_)                        # 0.953846...
+print(pd.Series(rf.feature_importances_, index=x.columns).nlargest(10))
 ```
 
 ---
 
 ## 7. Karmaşıklık Matrisi ve Değerlendirme Metrikleri
+
+**Çalıştırılmış notebook:** [Değerlendirme ve algoritma karşılaştırması](7%29%20Model%20Evaluation/Model%20Evaluation.ipynb)
 
 Doğruluk, tahminlerin **kaçının** doğru olduğunu söyler. **Karmaşıklık matrisi (confusion matrix)** ise **ne tür** hatalar yapıldığını söyler; bir kanser testinde bu iki tür hata eşit derecede kötü değildir.
 
@@ -877,14 +936,16 @@ Grafikteki iki öznitelikli lojistik regresyon için (hataları, bu takası aç�
 ```python
 from sklearn.metrics import confusion_matrix, classification_report, roc_auc_score
 
-# lr, x_test ve y_test bölüm 1'deki model ve 80 / 20 ayrımıdır
+# The section 1 logistic pipeline and its shared stratified 80/20 split.
 y_pred = lr.predict(x_test)
-print(confusion_matrix(y_test, y_pred))
-# [[71  0]
-#  [ 2 41]]
-print(classification_report(y_test, y_pred, target_names=["iyi huylu", "kötü huylu"]))
+print(confusion_matrix(y_test, y_pred, labels=[0, 1]))
+# [[72  0]
+#  [ 3 39]]
+print(classification_report(y_test, y_pred, target_names=["benign", "malignant"]))
 print(roc_auc_score(y_test, lr.predict_proba(x_test)[:, 1]))
 ```
+
+Bu kısa kod, 1. bölümün lojistik modelini ölçer. Tam 7. notebook ayrıca altı sabit modeli eğitim CV’siyle karşılaştırır, SVM’yi seçer ve eşiği yalnız eğitim OOF tahminlerinden belirler; dolayısıyla buradaki lojistik sonuçlarıyla aynı deney değildir.
 
 ---
 
@@ -904,7 +965,7 @@ print(roc_auc_score(y_test, lr.predict_proba(x_test)[:, 1]))
 | Karar Ağacı | 0.926 | 0.023 |
 
 > [!TIP]
-> **Sıralamayı dikkatle oku.** İlk dört model arasındaki fark, kendi kattan kata yayılımlarından küçük; yani bu veri setinde fiilen berabereler. Gerçek olan farklar: tek bir karar ağacı ile Naive Bayes diğerlerinin açıkça altında, orman ise kendisini oluşturan tek ağacı açıkça geçiyor.
+> **Sıralamayı dikkatle oku.** Bunlar eski 10 katlı deneyin betimleyici ortalamaları ve kat standart sapmalarıdır. Eğitim katlarının örtüşmesi ve bu hata çubukları, modellerin istatistiksel olarak eşit olduğunu veya farkların anlamlı olduğunu kanıtlamaz. Güncel 7. notebook, yalnız eğitimde 5 katlı karşılaştırma yapıp ardından ayrılmış test kümesini ölçer; güncel protokol için onun kayıtlı tablosunu kullan.
 
 | Algoritma | Tür | Ana hiperparametre | Yorumlanabilir mi? | İyi ölçeklenir mi? | Öznitelik ölçekleme gerekir mi? |
 |---|---|---|---|---|---|
@@ -914,6 +975,747 @@ print(roc_auc_score(y_test, lr.predict_proba(x_test)[:, 1]))
 | Naive Bayes | Olasılıksal | — | ✅ Evet | ✅ Evet | Hayır |
 | Karar Ağacı | Kural tabanlı | max_depth | ✅ Evet | ✅ Evet | Hayır |
 | Rastgele Orman | Ağaç topluluğu | n_estimators, max_features | ⚠️ Kısmen | ✅ Evet | Hayır |
+
+## 8. K-Means Kümeleme (Gözetimsiz Öğrenme)
+
+**Çalıştırılmış notebook:** [K-means kümeleme](8%29%20K-Means%20Clustering/K-Means.ipynb)
+
+Şimdiye kadar gördüğümüz bütün algoritmalar **gözetimli** öğrenmeydi: elimizde $`(x_i, y_i)`$ çiftleri vardı ve model her örneğin doğru etiketini görerek öğreniyordu. **Kümeleme (clustering)** tarafında işler değişiyor. Elimizde sadece öznitelikler ($`x_i`$) var, etiket yok. Algoritmadan beklediğimiz şey, birbirine benzeyen noktaları kendi kendine gruplaması.
+
+Müşterileri harcama alışkanlıklarına göre segmentlere ayırmak, benzer haberleri aynı torbaya koymak ya da sensör ölçümlerindeki doğal grupları bulmak bunun tipik örnekleri. Kümeleme bize sadece "şu noktalar birbirine yakın" der; o gruplara anlamlı isimler vermek (ör. "hafta sonu alışveriş yapanlar") hâlâ bizim işimiz.
+
+Bu bölümde ve bir sonraki hiyerarşik kümeleme bölümünde, fikri gözle rahat görebilmek için 2 boyutlu sentetik bir veri seti kullanıyoruz: $`(25, 25)`$, $`(55, 60)`$ ve $`(55, 15)`$ merkezleri etrafına standart sapması 5 olan 1.000'er nokta (toplam 3.000 nokta). Biz veriyi nasıl ürettiğimizi biliyoruz ama algoritmalara hiçbir etiket verilmiyor.
+
+![Sol: algoritmanın gördüğü 3.000 etiketsiz nokta. Sağ: K = 3 ile K-means üç bulutu ayırıyor; çarpılar öğrenilen merkezler.](images/clf_19_kmeans_clusters_tr.png)
+
+*Sol: algoritmanın gördüğü 3.000 etiketsiz nokta. Sağ: K = 3 ile K-means üç bulutu ayırıyor; çarpılar öğrenilen merkezler.*
+
+### Amaç fonksiyonu: K-means neyi küçültüyor?
+
+$`n`$ gözlem ve $`d`$ öznitelikten oluşan $`X`$ verisini $`K`$ gruba ($`C_1, \dots, C_K`$) bölmek istiyoruz. Her grubun bir merkezi ($`\mu_k`$) var. K-means'in küçültmeye çalıştığı değer **küme içi kareler toplamı**, yani **WCSS** (*Within-Cluster Sum of Squares*):
+
+```math
+J(c, \mu) = \sum_{k=1}^{K} \sum_{i \in C_k} \|x_i - \mu_k\|_2^2
+```
+
+İki boyutta bir noktanın kendi merkezine uzaklığının karesi bildiğimiz Pisagor:
+
+```math
+\|x_i - \mu_k\|_2^2 = (x_{i1} - \mu_{k1})^2 + (x_{i2} - \mu_{k2})^2
+```
+
+Burada karesini aldığımız için merkezden iki kat uzakta duran bir nokta maliyete dört kat fazla yük bindirir. scikit-learn'de eğitim bitince bu değer `model.inertia_` içinde saklanır.
+
+### Lloyd algoritması: iki basit adımı sırayla döndürmek
+
+Hem noktaların hangi kümeye gireceğini hem de merkezlerin tam yerini aynı anda çözmek zor. Ama birini sabitleyince diğeri çocuk oyuncağı oluyor:
+
+1. **Başlat:** $`K`$ değerini seç ve $`K`$ tane başlangıç merkezi belirle.
+2. **Atama (Assignment):** Merkezleri sabit tut, her noktayı en yakın merkeze gönder.
+3. **Güncelleme (Update):** Atamaları sabit tut, her merkezi kendi kümesindeki noktaların ortalamasına taşı.
+4. **Tekrarla:** Atamalar artık değişmeyene (ya da merkezler çok az kıpırdayana) kadar 2. ve 3. adımı döndür.
+
+İki adımın matematiksel yazılışı şöyle:
+
+```math
+c_i = \underset{k}{\arg\min}\; \|x_i - \mu_k\|_2^2, \qquad \mu_k = \frac{1}{|C_k|} \sum_{i \in C_k} x_i
+```
+
+Not: En yakın merkezi bulurken karekök almaya gerek yok; uzaklığı küçük olanın karesi de küçüktür. Ayrıca bir merkez verideki gerçek bir nokta olmak zorunda değil — o kümenin ağırlık merkezidir.
+
+![Kötü seçilmiş başlangıç merkezlerinden Lloyd döngüsünün adımları. Oklar merkezlerin her adımda küme ortalamasına nasıl kaydığını gösteriyor.](images/clf_20_kmeans_iterations_tr.png)
+
+*Kötü seçilmiş başlangıç merkezlerinden Lloyd döngüsünün adımları. Oklar merkezlerin her adımda küme ortalamasına nasıl kaydığını gösteriyor.*
+
+Yukarıdaki kasıtlı kötü başlangıçta WCSS sadece birkaç adımda **2.480.277 → 369.505 → 150.831 → 150.670 → 150.669** şeklinde çakılıp oturuyor.
+
+<details>
+<summary><strong>Merkez neden tam olarak aritmetik ortalama oluyor?</strong></summary>
+
+Kümenin üyeleri sabitken, maliyetin aday merkez $`\mu`$ değişkenine göre türevini alıp sıfıra eşitleyelim:
+
+```math
+J_k(\mu) = \sum_{i \in C_k} \|x_i - \mu\|_2^2, \qquad \nabla_\mu J_k = 2|C_k|\mu - 2\sum_{i \in C_k} x_i = 0
+```
+
+Buradan doğrudan $`\mu = \frac{1}{|C_k|}\sum_{i \in C_k} x_i`$ çıkar. K-means'teki "means" (ortalamalar) kelimesi tam olarak kareli hata kullandığımız için buradan geliyor. Kare yerine mutlak fark ($`L_1`$) kullansaydık ortalama değil medyan çıkardı (K-medians).
+
+</details>
+
+### Elle küçük bir tur
+
+Dört noktamız olsun: $`A=(1,1)`$, $`B=(1,3)`$, $`C=(5,5)`$, $`D=(7,5)`$. İki başlangıç merkezini $`\mu_1=(1,1)`$ ve $`\mu_2=(7,5)`$ seçelim:
+
+| Nokta | $`\mu_1`$'e uzaklık² | $`\mu_2`$'ye uzaklık² | Atanan küme |
+| --- | --- | --- | --- |
+| A (1, 1) | 0 | 52 | 1 |
+| B (1, 3) | 4 | 40 | 1 |
+| C (5, 5) | 32 | 4 | 2 |
+| D (7, 5) | 52 | 0 | 2 |
+
+Başlangıç WCSS değeri $`0 + 4 + 4 + 0 = 8`$. Şimdi merkezleri güncelle:
+
+```math
+\mu_1 = \frac{(1,1)+(1,3)}{2} = (1, 2), \qquad \mu_2 = \frac{(5,5)+(7,5)}{2} = (6, 5)
+```
+
+Yeni merkezlerle her noktanın merkeze uzaklığının karesi $`1`$ oluyor; yani WCSS **8'den 4'e** düştü. Bir sonraki turda atamalar değişmeyeceği için algoritma duruyor.
+
+### Başlangıç noktaları neden önemli? (K-means++)
+
+Atama adımı da güncelleme adımı da WCSS'yi hiçbir zaman artıramaz, hep aşağı çeker veya sabit bırakır. Yani algoritma mutlaka bir yerde durur. Ama durduğu yer her zaman **en iyi çözüm (global minimum)** değildir — şanssız başlangıç merkezleri algoritmayı kötü bir yerel minimuma kilitleyebilir.
+
+Bunu önlemek için iki şey yapıyoruz:
+- **K-means++:** İlk merkezi rastgele seçer, sonraki her merkezi mevcut merkezlere uzak olan noktalardan seçme olasılığını artırarak başlangıçları veriye yayar.
+- **Çoklu başlatma (`n_init=20`):** Algoritmayı farklı başlangıçlarla 20 kez çalıştırıp WCSS'si en düşük olan sonucu saklar.
+
+### K nasıl seçilir? Dirsek (Elbow) ve Silhouette
+
+WCSS'ye bakıp "en küçük olduğu $`K`$'yi alalım" diyemezsin. Çünkü $`K`$ arttıkça WCSS zaten hep düşer — her noktaya kendi merkezini verirsen ($`K = n`$) WCSS tam sıfır olur ama ortada gruplama diye bir şey kalmaz.
+
+Bunun yerine iki yönteme birlikte bakmak çok işe yarar:
+
+1. **Dirsek yöntemi (Elbow):** $`K`$ artarken WCSS'nin dik düşüşü bırakıp yataylaşmaya başladığı kırılma ("dirsek") noktasını ararız.
+2. **Silhouette skoru:** Her $`i`$ noktası için kendi kümesindeki diğer noktalara ortalama uzaklığa $`a(i)`$, en yakın *diğer* kümenin noktalarına ortalama uzaklığa $`b(i)`$ diyelim:
+
+```math
+s(i) = \frac{b(i) - a(i)}{\max\{a(i),\; b(i)\}}, \qquad -1 \le s(i) \le 1
+```
+
+Skor $`+1`$'e ne kadar yakınsa nokta kendi grubuna o kadar sıkı oturmuş ve komşu gruptan o kadar uzaktır. $`0`$ civarı sınırdaki kararsız noktaları, negatif değer ise muhtemelen yanlış kümeye düştüğünü gösterir.
+
+| K | WCSS (yuvarlanmış) | Ortalama Silhouette |
+| --- | --- | --- |
+| 1 | 1.893.615 | — |
+| 2 | 663.481 | 0.629 |
+| **3** | **150.669** | **0.744** |
+| 4 | 133.699 | 0.598 |
+| 5 | 116.800 | 0.465 |
+
+![Sol: WCSS, K = 3'e kadar sert düşüyor, sonra neredeyse düzleşiyor. Sağ: Silhouette skoru da açık ara K = 3'te zirve yapıyor.](images/clf_21_k_selection_tr.png)
+
+*Sol: WCSS, K = 3'e kadar sert düşüyor, sonra neredeyse düzleşiyor. Sağ: Silhouette skoru da açık ara K = 3'te zirve yapıyor.*
+
+### K-means nerede zorlanır?
+
+- **Ölçek farkı:** KNN'de olduğu gibi K-means de Öklid uzaklığı kullanır. Bir sütunu 10'la çarpmak uzaklık karesine etkisini 100 kat büyütür. Yaş ve maaş gibi farklı birimlerde mutlaka önce `StandardScaler` uygula.
+- **Küresel olmayan şekiller:** K-means uzayı düz çizgilerle (Voronoi bölgeleriyle) böler. Hilal şeklindeki ya da iç içe geçmiş gruplarda $`K`$'yi doğru versen bile grupları ortadan ikiye keser.
+- **Aykırı değerler:** Kare aldığımız için tek bir uç nokta küme ortalamasını kendine doğru çeker.
+
+![İki hilal verisinde K-means. K = 2 doğru olsa bile en yakın merkez mantığı kıvrımlı yapıyı takip edemez.](images/clf_22_kmeans_limits_tr.png)
+
+*İki hilal verisinde K-means. K = 2 doğru olsa bile en yakın merkez mantığı kıvrımlı yapıyı takip edemez.*
+
+### Python uygulaması
+
+```python
+import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
+
+rng = np.random.default_rng(42)
+X = np.vstack([
+    rng.normal(loc=mean, scale=5, size=(1000, 2))
+    for mean in [(25, 25), (55, 60), (55, 15)]
+])
+
+for k in range(2, 6):
+    km = KMeans(n_clusters=k, init="k-means++", n_init=20, random_state=42).fit(X)
+    sil = silhouette_score(X, km.labels_, sample_size=1500, random_state=42)
+    print(f"K={k}  WCSS={km.inertia_:,.0f}  silhouette={sil:.3f}")
+
+# En iyi model: K = 3
+model = KMeans(n_clusters=3, init="k-means++", n_init=20, random_state=42).fit(X)
+print("Merkezler:\n", np.round(model.cluster_centers_, 2))
+# [[24.63, 24.81], [55.07, 60.09], [55.12, 15.01]]
+```
+
+> [!TIP]
+> **Küçük ama önemli bir uyarı:** K-means'in verdiği `0, 1, 2` sayıları sadece rastgele kimlik numaralarıdır; sıralı değil, olasılık değil. Ve modeli tekrar eğitirken bulduğun `cluster` sütununu yanlışlıkla girdi verisinin (`X`) içine katma!
+
+---
+
+## 9. Hiyerarşik Kümeleme (Hierarchical Clustering)
+
+**Çalıştırılmış notebook:** [Hiyerarşik kümeleme](9%29%20Hierarchical%20Clustering/Hierarchical%20Clustering.ipynb)
+
+K-means bize seçtiğimiz tek bir $`K`$ için tek bir bölme verir. **Hiyerarşik kümeleme** ise grupların adım adım nasıl birleştiğinin bütün soy ağacını çıkarır. Böylece önce ağaca bakıp sonra nereden keseceğine karar verebilirsin.
+
+İki yönü vardır:
+- **Birleştirici (Agglomerative — aşağıdan yukarı):** Her noktayı tek başına bir küme sayarak başlar, en yakın iki kümeyi birleştire birleştire tek bir köke kadar çıkar. Pratikte en çok kullanılan budur.
+- **Bölücü (Divisive — yukarıdan aşağı):** Hepsini tek küme sayıp aşağı doğru böler.
+
+Birleştirici algoritmanın mantığı çok sade:
+1. $`n`$ noktayı $`n`$ ayrı küme olarak başlat.
+2. Seçtiğin **bağlantı kuralına (linkage)** göre birbirine en yakın iki kümeyi bul.
+3. Bu ikisini birleştir ve uzaklık tablosunu güncelle.
+4. Tek bir büyük küme kalana kadar devam et.
+
+Birleştirme kararları açgözlüdür (*greedy*): bir kez birleşen iki nokta bir daha ayrılmaz.
+
+### İki küme arasındaki uzaklık nasıl ölçülür? (Linkage)
+
+İki nokta arasındaki uzaklık basit (Öklid). Peki içinde birden fazla nokta olan $`A`$ ve $`B`$ kümelerinin birbirine ne kadar yakın olduğuna nasıl karar vereceğiz? Bunun beş yaygın yolu var:
+
+| Linkage | Formül | Ne yapar? |
+| --- | --- | --- |
+| **Single (tek)** | $`\min_{x\in A,\, y\in B} d(x,y)`$ | En yakın iki uç noktaya bakar; uzun zincirler oluşturabilir (*chaining*) |
+| **Complete (tam)** | $`\max_{x\in A,\, y\in B} d(x,y)`$ | En uzak iki uç noktaya bakar; sıkı, kompakt kümeleri sever |
+| **Average (ortalama)** | $`\frac{1}{n_A n_B}\sum_{x\in A}\sum_{y\in B} d(x,y)`$ | Tüm ikili uzaklıkların ortalamasını alır |
+| **Centroid (merkez)** | $`\|\mu_A - \mu_B\|_2`$ | İki kümenin ortalamaları arasındaki uzaklığa bakar |
+| **Ward** | $`\frac{n_A n_B}{n_A + n_B}\|\mu_A - \mu_B\|_2^2`$ | Birleşme olursa toplam küme içi kare hatanın ($`\Delta\text{SSE}`$) ne kadar artacağına bakar |
+
+![İkişer noktalı iki kümede linkage seçimi ölçülen değeri değiştiriyor. Average ile Centroid aynı şey değil; Ward ise doğrudan hata artışını ölçüyor.](images/clf_25_linkage_tr.png)
+
+*İkişer noktalı iki kümede linkage seçimi ölçülen değeri değiştiriyor. Average ile Centroid aynı şey değil; Ward ise doğrudan hata artışını ölçüyor.*
+
+Yukarıdaki küçük örnekte $`A=\{(0,0),(0,2)\}`$ ve $`B=\{(4,0),(4,2)\}`$ için dört çapraz uzaklık $`4,\; \sqrt{20},\; \sqrt{20},\; 4`$:
+- **Single** = $`4`$, **Complete** = $`\sqrt{20} \approx 4.472`$
+- **Average** = $`(8 + 2\sqrt{20})/4 \approx 4.236`$
+- **Centroid** = $`(0,1)`$ ile $`(4,1)`$ arası = $`4`$
+- **Ward** ($`\Delta\text{SSE}`$) = $`\frac{2\cdot 2}{2+2} \cdot 4^2 = 16`$
+
+<details>
+<summary><strong>Daha derin: Ward formülünde küme boyutları nereden geliyor?</strong></summary>
+
+Her kümenin iç hata karesi $`SSE(C) = \sum_{x \in C} \|x - \mu_C\|^2`$ olsun. $`A`$ ve $`B`$ birleşince yeni ağırlıklı ortalama $`\mu_{A\cup B} = \frac{n_A\mu_A + n_B\mu_B}{n_A + n_B}`$ olur. $`x - \mu_{A\cup B} = (x - \mu_A) + (\mu_A - \mu_{A\cup B})`$ açılımını yapıp kareleri topladığımızda çapraz terimler sıfırlanır (çünkü $`\sum_{x\in A}(x-\mu_A)=0`$) ve elimizde şu kalır:
+
+```math
+\Delta SSE(A, B) = SSE(A \cup B) - SSE(A) - SSE(B) = \frac{n_A n_B}{n_A + n_B}\,\|\mu_A - \mu_B\|_2^2
+```
+
+Yani Ward, K-means ile aynı kare hata fikrini kullanır ama her adımda toplam hatayı en az artıran birleşmeyi seçer. SciPy'nin dendrogramda çizdiği Ward yüksekliği ise $`h(A, B) = \sqrt{2\,\Delta SSE(A, B)}`$ değeridir.
+
+</details>
+
+### Dendrogram okumak
+
+Beş nokta alalım: $`1=(1,1),\; 2=(1,2),\; 3=(6,6),\; 4=(6,6.5),\; 5=(2,1.5)`$. Single linkage ile birleşmeler sırayla şöyle gider:
+
+| Adım | Birleşen kümeler | Birleşme yüksekliği | Kalan küme sayısı |
+| --- | --- | --- | --- |
+| 1 | $`\{3\}`$ ile $`\{4\}`$ | $`0.500`$ | 4 |
+| 2 | $`\{1\}`$ ile $`\{2\}`$ | $`1.000`$ | 3 |
+| 3 | $`\{1, 2\}`$ ile $`\{5\}`$ | $`\sqrt{1.25} \approx 1.118`$ | 2 |
+| 4 | $`\{1, 2, 5\}`$ ile $`\{3, 4\}`$ | $`\sqrt{36.25} \approx 6.021`$ | 1 |
+
+![Sol: iki gruba ayrılan beş nokta. Sağ: single-linkage dendrogramı. Yükseklik = 3 çizgisinden yatay kesince iki dikey dal kesilir → {1,2,5} ve {3,4}.](images/clf_23_dendrogram_reading_tr.png)
+
+*Sol: iki gruba ayrılan beş nokta. Sağ: single-linkage dendrogramı. Yükseklik = 3 çizgisinden yatay kesince iki dikey dal kesilir → {1,2,5} ve {3,4}.*
+
+Dendrogram okurken iki şeye dikkat et:
+- **Dikey yükseklik** iki kümenin hangi uzaklıkta birleştiğini gösterir. **Yatay sıra** ise sadece çizim düzenidir — dallar sağa sola çevrilse de kümeleme değişmez.
+- İki birleşme seviyesi arasındaki uzun dikey boşluk, "buradan kesebilirsin" diyen güçlü bir adaydır. Yukarıda $`1.12`$ ile $`6.02`$ arasındaki dev sıçrama açıkça 2 kümeyi işaret ediyor.
+
+Aynı 3.000 noktalık sentetik veride Ward dendrogramına bakalım:
+
+![3.000 noktanın Ward dendrogramı (okunabilmesi için 24 yaprağa özetlenmiş). İç birleşmeler 177'de bitiyor; son iki birleşme 1.013 ve 1.569'da. h = 200 kesimi tam 3 grup (998, 1.000, 1.002 nokta) veriyor.](images/clf_24_ward_dendrogram_tr.png)
+
+*3.000 noktanın Ward dendrogramı (okunabilmesi için 24 yaprağa özetlenmiş). İç birleşmeler 177'de bitiyor; son iki birleşme 1.013 ve 1.569'da. h = 200 kesimi tam 3 grup (998, 1.000, 1.002 nokta) veriyor.*
+
+### K-means mi, Hiyerarşik kümeleme mi?
+
+| Özellik | K-Means | Hiyerarşik Kümeleme |
+| --- | --- | --- |
+| K önceden seçilir mi? | Evet | Hayır — ağacı çizip sonra kesebilirsin |
+| Çıktı | Tek bölme ve $`K`$ merkez | İç içe grupları gösteren tam ağaç |
+| Yeni noktaya tahmin (`predict`) | Var (en yakın merkez) | Yerleşik `predict` yok |
+| Hız ve bellek | Çok hızlı, $`O(nKdT)`$ | Pahalı, $`O(n^2)`$ bellek (100 bin noktada ~40 GB uzaklık matrisi!) |
+| Ölçekleme gerekir mi? | Evet | Evet |
+
+Kısacası küçük/orta veri setlerinde yapıyı keşfetmek için hiyerarşik kümeleme harikadır; büyük veri setlerinde K-means çok daha pratiktir.
+
+### Python uygulaması
+
+```python
+from scipy.cluster.hierarchy import linkage, dendrogram, fcluster
+from sklearn.cluster import AgglomerativeClustering
+import matplotlib.pyplot as plt
+
+# X, 8. bölümdeki 3.000 noktalık etiketsiz veri
+Z = linkage(X, method="ward", metric="euclidean")
+
+plt.figure(figsize=(10, 4))
+dendrogram(Z, truncate_mode="lastp", p=24, show_leaf_counts=True, color_threshold=200)
+plt.axhline(200, color="black", linestyle="--")
+plt.ylabel("Ward yüksekliği = sqrt(2 * delta_SSE)")
+plt.show()
+
+# Ağacı 200 yüksekliğinden kes (SciPy) ya da doğrudan K=3 iste (sklearn)
+labels_scipy = fcluster(Z, t=200, criterion="distance")
+labels_sklearn = AgglomerativeClustering(n_clusters=3, linkage="ward").fit_predict(X)
+```
+
+---
+
+## 10. Doğal Dil İşleme (NLP) ve Metin Sınıflandırma
+
+**Çalıştırılmış notebook:** [NLP: duygu sınıflandırma](10%29%20Natural%20Language%20Processing/NLP%20Sentiment%20Classification.ipynb)
+
+Bilgisayarlar kelimelerden anlamaz, sadece sayılardan anlar. **Doğal Dil İşleme (NLP)** dediğimiz alan, insan dilini modellerin işleyebileceği sayısal temsillere çevirip üzerinde sınıflandırma, duygu analizi, arama, özetleme gibi işler yapmaktır.
+
+Klasik metin sınıflandırmanın omurgası üç adımdan oluşur: **metni hazırla → sayısal vektöre çevir → sınıflandırıcı eğit.**
+
+![Temiz bir metin sınıflandırma hattı. Sözlük, IDF ağırlıkları ve model sadece eğitim verisinden öğrenilir; test metinleri yalnızca bu öğrenilen dönüşümlerden geçer.](images/clf_26_nlp_pipeline_tr.png)
+
+*Temiz bir metin sınıflandırma hattı. Sözlük, IDF ağırlıkları ve model sadece eğitim verisinden öğrenilir; test metinleri yalnızca bu öğrenilen dönüşümlerden geçer.*
+
+### 1. Metni hazırlamak: temizleme, tokenization, stopwords, lemmatization
+
+- **Normalleştirme:** Büyük/küçük harf tutarlılığı, fazla boşlukları temizleme. Noktalamayı rastgele silerken dikkatli ol: `shouldn't` kelimesindeki kesme işaretini tokenization'dan önce silersen `shouldn t` diye anlamsız bir şeye döner.
+- **Tokenization:** Metni parçalara (kelimelere veya alt-kelimelere) ayırma. Örneğin `"not good movie"` → `["not", "good", "movie"]`.
+- **Stopwords:** `"the"`, `"and"`, `"ve"`, `"bir"` gibi çok sık geçen kelimeler. Her zaman hepsini silmek doğru değildir! Özellikle duygu analizinde **`"not"`** kelimesini silersen `"not good"` bir anda `"good"` olur ve anlam tamamen tersine döner.
+- **Stemming vs. Lemmatization:**
+  - *Stemming* ekleri kaba kurallarla keser (`studies` → `studi`). Hızlıdır ama gerçek kelime çıkmayabilir.
+  - *Lemmatization* kelimenin sözlük kökünü bulur (`loved` fiil olarak → `love`). Not: NLTK'nin `WordNetLemmatizer`'ı sadece İngilizce içindir ve fiil/isim bilgisi vermezsen kelimeleri varsayılan olarak isim sanar; Türkçe gibi sondan eklemeli diller için uygun değildir.
+
+### 2. Bag of Words (Kelime Çantası)
+
+Eğitim verisindeki tüm benzersiz kelimelerden $`V`$ boyutlu bir sözlük çıkarırız. Sonra $`n`$ belgenin her birini, o kelimenin belgede kaç kez geçtiğini sayan bir satır olarak yazarız ($`X \in \mathbb{R}^{n \times V}`$).
+
+Sözlüğümüz `[acting, good, movie, not]` olsun ve üç kısa yorumumuz bulunsun:
+
+| Belge | acting | good | movie | not |
+| --- | --- | --- | --- | --- |
+| D1: `good movie` | 0 | 1 | 1 | 0 |
+| D2: `not good movie` | 0 | 1 | 1 | 1 |
+| D3: `good acting good` | 1 | 2 | 0 | 0 |
+
+Tek tek kelimelere (**unigram**) bakmak kelime sırasını kaybeder (`"köpek adamı ısırdı"` ile `"adam köpeği ısırdı"` aynı vektör olur). Yan yana ikililer (**bigram**, ör. `not good`) eklemek bu sorunu kısmen çözer. Kısa karakter dizileri (**char n-gram**, ör. 3–5 harflik parçalar) ise yazım hatalarına ve eklere karşı modeli dayanıklı yapar.
+
+### 3. Sparse Matrisler: sıfırları boşuna bellekte tutma
+
+Binlerce kelimelik bir sözlükte tek bir yorum en fazla 15–20 kelime içerir; yani tablonun **%99'undan fazlası sıfırdır**. Çoğu elemanı sıfır olan matrise **sparse (seyrek) matris** denir.
+
+Sıfırları tek tek RAM'de tutmak yerine **CSR (Compressed Sparse Row)** formatı sadece sıfır olmayan değerleri üç küçük diziyle saklar:
+- `data`: sıfır olmayan sayılar
+- `indices`: her sayının hangi sütunda olduğu
+- `indptr`: her satırın `data` içinde nerede başlayıp nerede bittiği
+
+![Üç belgeli matrisin CSR gösterimi. İkinci belge (D2), sıfırları hiç saklamadan sadece data[2:5] ve karşılık gelen sütun indeksleriyle geri kurulur.](images/clf_28_csr_storage_tr.png)
+
+*Üç belgeli matrisin CSR gösterimi. İkinci belge (D2), sıfırları hiç saklamadan sadece data[2:5] ve karşılık gelen sütun indeksleriyle geri kurulur.*
+
+Bunun bellek kazancı devasa. Aşağıdaki 2.383 yorumluk duygu analizi verisinde kelime TF-IDF matrisi **2.383 × 4.457** boyutunda ve sadece 32.613 hücresi sıfır değil (yoğunluk **%0.31**). Normal yoğun matris (`float64`) **85.0 MB** yer tutarken CSR formatı sadece **0.40 MB** tutuyor — yani **212 kat daha az bellek**.
+
+![Aynı eğitim matrisi yoğun biçimde 84.97 MB, CSR biçiminde 0.40 MB (yatay eksen logaritmik).](images/clf_29_sparse_memory_tr.png)
+
+*Aynı eğitim matrisi yoğun biçimde 84.97 MB, CSR biçiminde 0.40 MB (yatay eksen logaritmik).*
+
+> [!WARNING]
+> **Gereksiz yere `.toarray()` çağırma.** scikit-learn'de `MultinomialNB`, `LogisticRegression` ve `LinearSVC` zaten sparse matrisi doğrudan alır. `.toarray()` sadece bütün o sıfırları RAM'e döküp bilgisayarını yavaşlatır (büyük veride belleği patlatır).
+
+### 4. TF-IDF: sık geçen sıradan kelimelerin sesini kısmak
+
+Ham sayımlarda her yorumda geçen `"movie"` veya `"good"` gibi kelimeler çok yüksek puan toplar. **TF-IDF** (*Term Frequency – Inverse Document Frequency*), bir kelimenin belgedeki sıklığını (TF), kaç belgede birden geçtiğinin tersiyle (IDF) çarpar. Her yerde geçen kelime baskılanır, ayırt edici kelime öne çıkar.
+
+$`N`$ eğitim belgesi ve $`j`$ kelimesini içeren belge sayısı $`df_j`$ olmak üzere scikit-learn'ün yumuşatılmış formülü:
+
+```math
+\text{idf}_j = \log\frac{1 + N}{1 + df_j} + 1, \qquad u_{ij} = \text{tf}_{ij} \cdot \text{idf}_j, \qquad x_i = \frac{u_i}{\|u_i\|_2}
+```
+
+Yukarıdaki üç cümlede `good` 3/3 belgede var → $`\text{idf} = 1`$. `movie` 2/3 belgede → $`1 + \log(4/3) \approx 1.288`$. `acting` ve `not` 1/3 belgede → $`1 + \log(2) \approx 1.693`$. Yani D2 (`not good movie`) için ham ağırlıklar `[0, 1, 1.288, 1.693]`, L2 normuna bölünce **`[0, 0.425, 0.548, 0.720]`** oluyor. En nadir kelime olan `not` en yüksek ağırlığı aldı.
+
+![Aynı üç belgenin ham sayım (sol) ve L2-normalleştirilmiş TF-IDF (sağ) temsilleri. Sıfırlar yerinde kalır, nadir kelimeler güçlenir.](images/clf_27_bow_tfidf_tr.png)
+
+*Aynı üç belgenin ham sayım (sol) ve L2-normalleştirilmiş TF-IDF (sağ) temsilleri. Sıfırlar yerinde kalır, nadir kelimeler güçlenir.*
+
+### 5. Metin için hangi modeller iyi çalışır?
+
+- **Neden GaussianNB değil, MultinomialNB?** `GaussianNB` her özniteliğin çan eğrisine uyduğunu varsayar — çoğu sıfır olan kelime sayımlarına hiç uymaz. **Multinomial Naive Bayes** ise doğrudan kelime sayımları için tasarlanmıştır. $`N_{cj}`$, $`c`$ sınıfındaki eğitim belgelerinde $`j`$ kelimesinin toplam geçme sayısı ve $`\alpha > 0`$ (Laplace yumuşatması) olmak üzere:
+
+```math
+\theta_{cj} = \frac{N_{cj} + \alpha}{\sum_{v=1}^{V} N_{cv} + \alpha V}, \qquad \hat{c} = \underset{c}{\arg\max}\;\left[\log \pi_c + \sum_{j=1}^{V} x_j \log \theta_{cj}\right]
+```
+
+Yumuşatma ($`\alpha = 1`$), eğitimde hiç görülmemiş bir kelime testte çıkınca tüm olasılığı sıfırlamasın diye vardır. Örneğin `[good, bad, movie]` sözlüğünde olumlu toplamlar `[4, 1, 3]`, olumsuz toplamlar `[1, 4, 3]` ve iki sınıf eşit sıklıktaysa, `"good movie"` için payda $`8 + 3 = 11`$ olur: $`q_+ = \frac{1}{2}\cdot\frac{5}{11}\cdot\frac{4}{11} = \frac{10}{121}`$ ve $`q_- = \frac{1}{2}\cdot\frac{2}{11}\cdot\frac{4}{11} = \frac{4}{121}`$ → olumlu olasılığı $`10 / (10 + 4) \approx \mathbf{0.714}`$.
+
+- **Lojistik Regresyon ve LinearSVC:** Yüksek boyutlu sparse TF-IDF vektörlerinde doğrusal modeller şaşırtıcı derecede güçlüdür. Lojistik regresyon her kelimeye bir ağırlık $`w_j`$ öğrenir: pozitif ağırlık olumlu sınıfa, negatif ağırlık olumsuz sınıfa iter; L2 düzenlileştirme nadir kelimelerin aşırı ağırlık almasını engeller.
+
+![Kelime TF-IDF + Lojistik Regresyon modelinin öğrendiği en güçlü olumlu (sağ) ve olumsuz (sol) kelime ağırlıkları.](images/clf_32_nlp_word_weights_tr.png)
+
+*Kelime TF-IDF + Lojistik Regresyon modelinin öğrendiği en güçlü olumlu (sağ) ve olumsuz (sol) kelime ağırlıkları.*
+
+### Gerçek veri üzerinde karşılaştırma (UCI Duygu Analizi)
+
+Amazon, IMDb ve Yelp'ten alınan 3.000 İngilizce yorum (21 tekrar satırı temizlenince 2.979 benzersiz yorum; 2.383 eğitim / 596 test) üzerinde 6 farklı hattı **sadece eğitim verisinde 5 katlı çapraz doğrulamayla** (her kat kendi sözlüğünü ve IDF'ini öğrenerek — veri sızıntısı olmadan!) karşılaştırdık:
+
+| Pipeline | 5 katlı CV Doğruluk | 5 katlı CV Macro-F1 | Kat std |
+| --- | --- | --- | --- |
+| Çoğunluk sınıfı (`DummyClassifier`) | 0.501 | 0.334 | 0.000 |
+| Sayım + `GaussianNB` (yoğun matris) | 0.669 | 0.658 | 0.018 |
+| Unigram/bigram + `MultinomialNB` | 0.808 | 0.808 | 0.027 |
+| Kelime TF-IDF + `LinearSVC` | 0.811 | 0.811 | 0.020 |
+| Kelime TF-IDF + `LogisticRegression` | 0.813 | 0.813 | 0.032 |
+| **Kelime + Karakter TF-IDF + `LogisticRegression`** | **0.838** | **0.838** | **0.019** |
+
+![Eğitim verisindeki 5 katlı CV karşılaştırması. GaussianNB geride kalıyor; kelime + karakter TF-IDF ile Lojistik Regresyon zirvede.](images/clf_30_nlp_cv_comparison_tr.png)
+
+*Eğitim verisindeki 5 katlı CV karşılaştırması. GaussianNB geride kalıyor; kelime + karakter TF-IDF ile Lojistik Regresyon zirvede.*
+
+Kazanan model ayrılmış 596 test yorumunda **%83.89 doğruluk** (macro-F1 = **0.839**) alıyor — 500 doğru, 96 yanlış:
+
+![Seçilen duygu analizi modelinin 596 test yorumu üzerindeki karmaşıklık matrisi (her sınıfta 298 yorum).](images/clf_31_nlp_confusion_matrix_tr.png)
+
+*Seçilen duygu analizi modelinin 596 test yorumu üzerindeki karmaşıklık matrisi (her sınıfta 298 yorum).*
+
+### Python uygulaması
+
+```python
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.linear_model import LogisticRegression
+from sklearn.metrics import accuracy_score, classification_report
+from sklearn.model_selection import train_test_split
+from sklearn.pipeline import FeatureUnion, Pipeline
+from Classification.nlp_text_classification import load_sentiment
+
+data, _ = load_sentiment()
+X_train, X_test, y_train, y_test = train_test_split(
+    data.text, data.label, test_size=0.2, random_state=42, stratify=data.label
+)
+
+features = FeatureUnion([
+    ("word", TfidfVectorizer(ngram_range=(1, 2), min_df=2, max_features=15000, sublinear_tf=True)),
+    ("char", TfidfVectorizer(analyzer="char_wb", ngram_range=(3, 5), min_df=2, max_features=15000, sublinear_tf=True)),
+])
+
+pipe = Pipeline([
+    ("features", features),
+    ("clf", LogisticRegression(C=3, max_iter=2000, random_state=42)),
+])
+
+pipe.fit(X_train, y_train)
+y_pred = pipe.predict(X_test)
+print("Test doğruluğu:", round(accuracy_score(y_test, y_pred), 4))  # 0.8389
+print(classification_report(y_test, y_pred, target_names=["negative", "positive"]))
+```
+
+> [!NOTE]
+> **Modern NLP'ye kısa köprü:** Bag of Words ve TF-IDF hâlâ şaşırtıcı derecede sağlam ve hızlı birer temel modeldir. Ama kelimenin bağlamını anlamazlar (`"film çok iyi değil"` veya ironi gibi durumlar). Daha karmaşık problemlerde yoğun vektörler (*embeddings*) ve önceden eğitilmiş dil modelleri (Transformer / BERT) bu boşluğu doldurur — yine aynı temiz bölme ve `Pipeline` disipliniyle.
+
+---
+
+## 11. PCA — Temel Bileşen Analizi (Principal Component Analysis)
+
+Elimizde 10, 30 hatta 1.000 sütunlu (yüksek boyutlu) bir veri seti olduğunu düşün. Hem bunu 2 boyutta çizip gözle inceleyemiyoruz, hem de bir sürü sütun aslında birbirinin neredeyse kopyası (Wisconsin verisinde `radius_mean`, `perimeter_mean` ve `area_mean` hep aynı büyüklüğü ölçüyordu). **PCA (Principal Component Analysis)**, verideki bilgiyi olabildiğince koruyarak boyutu düşüren gözetimsiz bir yöntemdir.
+
+Nerelerde sık kullanılır?
+1. **Boyut indirgeme (Dimension Reduction):** 30 özniteliği 10 özniteliğe indirip modeli hızlandırmak ve gürültüyü azaltmak.
+2. **Görselleştirme:** 4 boyutlu (Iris) veya 10 boyutlu veriyi 2 boyuta düşürüp ekrana çizmek.
+3. **Öznitelik çıkarımı (Feature Extraction):** Birbiriyle korelasyonlu sütunları birbirine dik, bağımsız yeni eksenlere dönüştürmek (ör. finans/borsa faktör analizi, gen ifade verileri).
+
+### Sezgi: varyansın en büyük olduğu yönü bul
+
+2 boyutlu bir nokta bulutunu 1 boyuta (tek bir doğru üzerine) indirmek istediğini düşün. Doğruyu hangi açıyla koyarsan en az bilgi kaybedersin?
+
+Cevap: **Noktaların en geniş yayıldığı (varyansın en büyük olduğu) yöne!** Noktaları bu doğrunun üstüne dik indirirsen hem noktalar birbirinden en iyi ayrılır hem de noktaların doğruya olan dik uzaklıklarının kareleri toplamı (bilgi kaybı) en küçük olur.
+
+- Bu ilk eksene **birinci temel bileşen** ($`p_1`$, PC1) denir.
+- İkinci temel bileşen ($`p_2`$, PC2), $`p_1`$'e **tam dik** ($`p_1^\top p_2 = 0`$) olup geriye kalan varyansın en büyüğünü yakalar.
+- $`d`$ boyutlu veride bu şekilde birbirine dik $`d`$ eksen bulunur; sonra en çok varyans taşıyan ilk $`k`$ tanesini tutup gerisini atarız.
+
+![Sol: 2B veride PC1 en büyük yayılım yönünü (%92.0), ona dik olan PC2 geriye kalan küçük kalınlığı (%8.0) yakalar. Sağ: 1 boyuta indirgendiğinde PC1 neredeyse tüm yapıyı korur.](images/clf_33_pca_geometry_tr.png)
+
+*Sol: 2B veride PC1 en büyük yayılım yönünü (%92.0), ona dik olan PC2 geriye kalan küçük kalınlığı (%8.0) yakalar. Sağ: 1 boyuta indirgendiğinde PC1 neredeyse tüm yapıyı korur.*
+
+### Arkasındaki matematik (adım adım)
+
+1. **Veriyi merkezle (ve ölçekle):** Her sütunun ortalamasını sıfıra çek ($`\tilde{X} = X - \mu`$). Birimler farklıysa standart sapmaya da böl (`StandardScaler`).
+2. **Kovaryans matrisini kur:** Özniteliklerin birbirleriyle nasıl birlikte değiştiğini özetleyen $`d \times d`$ simetrik matris:
+
+```math
+\Sigma = \frac{1}{n - 1}\,\tilde{X}^\top \tilde{X}
+```
+
+3. **Varyansı en büyük yapan birim vektörü bul:** Birim uzunlukta ($`\|v\|_2 = 1`$) bir $`v`$ yönüne izdüşüm $`\tilde{X}v`$ olur. Bu izdüşümün varyansı $`v^\top \Sigma v`$ değeridir. Kısıtlı eniyileme (Lagrange çarpanı $`\lambda`$) kurarsak:
+
+```math
+\mathcal{L}(v, \lambda) = v^\top \Sigma v - \lambda(v^\top v - 1) \quad \Longrightarrow \quad \nabla_v \mathcal{L} = 2\Sigma v - 2\lambda v = 0 \quad \Longrightarrow \quad \Sigma v = \lambda v
+```
+
+Bu tam olarak **özdeğer / özvektör (eigenvalue / eigenvector)** denklemidir!
+- Her **özvektör** $`v_k`$ bir temel bileşen yönüdür.
+- Karşılık gelen **özdeğer** $`\lambda_k`$, verinin o yöndeki varyansıdır.
+- $`k`$. bileşenin açıkladığı varyans oranı (**explained variance ratio**):
+
+```math
+\text{Açıklanan varyans oranı}_k = \frac{\lambda_k}{\sum_{j=1}^{d} \lambda_j}
+```
+
+4. **İzdüşüm al:** Özdeğerleri büyükten küçüğe sırala ($`\lambda_1 \ge \lambda_2 \ge \dots \ge \lambda_d`$), ilk $`k`$ özvektörü $`V_k \in \mathbb{R}^{d \times k}`$ matrisinde yan yana koy ve veriyi yeni uzaya taşı:
+
+```math
+Z = \tilde{X} V_k \in \mathbb{R}^{n \times k}
+```
+
+<details>
+<summary><strong>Daha derin: scikit-learn perde arkasında neden SVD kullanıyor?</strong></summary>
+
+Kovaryans matrisi $`\tilde{X}^\top \tilde{X}`$'i açıkça çarpmak, özellikle öznitelik sayısı büyükse hem yavaş hem de sayısal hassasiyet kaybettiricidir. Bunun yerine merkezlenmiş matris doğrudan Tekil Değer Ayrıştırması (**SVD**) ile parçalanır: $`\tilde{X} = U S V^\top`$. Buradaki $`V`$ sütunları zaten kovaryans matrisinin özvektörleri, $`\lambda_k = S_k^2 / (n - 1)`$ ise özdeğerleridir. scikit-learn'ün `PCA` sınıfı tam olarak bunu yapar.
+
+</details>
+
+### Gerçek örnek: Iris veri setini 4 boyuttan 2 boyuta indirmek
+
+Klasik Iris veri setinde 150 çiçek ve 4 ölçü var (çanak/taç yaprak eni ve boyu). 4 boyutu çizemeyiz ama standartlaştırıp 2 bileşene indirgersek:
+- **PC1** tek başına toplam varyansın **%73.0**'ını,
+- **PC2** ise **%22.9**'unu açıklıyor.
+- Toplam **%95.8** bilgiyi koruyarak 4 boyuttan 2 boyuta inmiş oluyoruz! (Ölçeklemeden ham veride `PCA(n_components=2)` çalıştırsaydın PC1 %92.5 + PC2 %5.3 = %97.8 çıkardı; çünkü taç yaprak boyu diğerlerine göre çok daha geniş bir aralıkta.)
+
+![Sol: Standartlaştırılmış Iris'te her bileşenin varyans payı ve kümülatif toplam. Sağ: 4 boyutlu çiçek verisinin 2B PCA görünümü — Setosa tamamen ayrılıyor.](images/clf_34_pca_iris_tr.png)
+
+*Sol: Standartlaştırılmış Iris'te her bileşenin varyans payı ve kümülatif toplam. Sağ: 4 boyutlu çiçek verisinin 2B PCA görünümü — Setosa tamamen ayrılıyor.*
+
+### Sık karıştırılan nokta: `StandardScaler` mı, `whiten=True` mu?
+
+PCA kod örneklerinde sıkça `PCA(n_components=2, whiten=True)` satırının yanına *"whiten = normalize"* gibi notlar yazılır. **Bu ikisi aynı şey değildir!**
+
+- **`StandardScaler` (PCA'dan ÖNCE):** Girdi sütunlarını aynı ölçeğe getirir. Bunu yapmazsan büyük birimli bir sütun (ör. 144–2.501 arası `area_mean`), küçük birimli sütunu (0.05–0.16 arası `smoothness_mean`) tamamen ezer ve PC1 tek başına **%100.0** varyans açıklıyormuş gibi görünür. Wisconsin verisinin 30 özniteliğinin tamamında da ham PCA'da PC1 tek başına %98.2 çıkarken, standartlaştırınca ilk 10 bileşen dengeli biçimde %95.2 varyans toplar.
+- **`whiten=True` (PCA'dan SONRA):** Bulunan bileşenleri kendi standart sapmasına ($`\sqrt{\lambda_k}`$) böler. Böylece çıktıdaki PC1'in de PC2'nin de varyansı tam **1.0** olur — yani elips şeklindeki bulutu daireye çevirir. Bazı algoritmalar (ör. doğrusal modeller, sinir ağları) bundan fayda görebilir ama ham verideki ölçek dengesizliğini düzeltmez!
+
+![Wisconsin verisinde area_mean ve smoothness_mean. Sol: ölçeklemesiz PCA tamamen area_mean eksenine kilitleniyor. Orta: StandardScaler sonrası iki özellik dengeli. Sağ: whiten=True çıktı varyanslarını 1'e eşitliyor.](images/clf_35_pca_scaling_whiten_tr.png)
+
+*Wisconsin verisinde area_mean ve smoothness_mean. Sol: ölçeklemesiz PCA tamamen area_mean eksenine kilitleniyor. Orta: StandardScaler sonrası iki özellik dengeli. Sağ: whiten=True çıktı varyanslarını 1'e eşitliyor.*
+
+### Python uygulaması
+
+```python
+from sklearn.datasets import load_iris
+from sklearn.decomposition import PCA
+from sklearn.preprocessing import StandardScaler
+from sklearn.pipeline import make_pipeline
+
+iris = load_iris()
+X, y = iris.data, iris.target
+
+# Doğru pratik: önce StandardScaler, sonra PCA (eğitim/test ayrımı varsa Pipeline şart!)
+pca_pipe = make_pipeline(StandardScaler(), PCA(n_components=2))
+X_2d = pca_pipe.fit_transform(X)
+
+pca = pca_pipe.named_steps["pca"]
+print("Açıklanan varyans oranları:", pca.explained_variance_ratio_.round(4))  # [0.7296, 0.2285]
+print("Toplam korunan varyans:    ", round(pca.explained_variance_ratio_.sum(), 4))  # 0.9581
+```
+
+> [!WARNING]
+> **PCA kullanırken iki şeye dikkat:** (1) PCA etiketleri ($`y`$) hiç görmez; en yüksek varyanslı yön her zaman sınıfları en iyi ayıran yön olmayabilir. (2) Yeni bileşenler eski sütunların doğrusal birleşimidir, yani `"radius_mean > 15"` gibi doğrudan yorumlanamazlar. (3) Bir sınıflandırıcıdan önce PCA koyuyorsan `PCA`'yı da mutlaka `Pipeline` içinde sadece eğitim verisine fit et.
+
+---
+
+## 12. Model Seçimi: K-Katlı Çapraz Doğrulama ve Grid Search CV
+
+Bir modeli eğitirken aslında iki farklı türde sayıyla uğraşırız:
+
+| Tür | Kim belirler? | Örnekler |
+| --- | --- | --- |
+| **Öğrenilen parametreler** | Model `.fit()` sırasında veriden öğrenir | Lojistik regresyondaki $`w, b`$; karar ağacındaki bölme eşikleri |
+| **Hiperparametreler** | Eğitim başlamadan **biz** seçeriz | KNN'deki $`K`$; SVM'deki `C` ve `gamma`; ağaçtaki `max_depth` |
+
+Şimdi kritik soru şu: **En iyi hiperparametreyi (örneğin KNN için hangi $`K`$?) nasıl seçeceğiz?**
+
+Eğer `K = 1, 2, ..., 15` deneyip **test setinde** en yüksek skoru vereni seçersen, test setini sessizce modelin tasarımına dahil etmiş olursun. Sınav sorularına önceden bakıp ona göre ezber yapmak gibi — test skorun gerçekte olduğundan yüksek görünür (*data leakage* / test setine aşırı öğrenme).
+
+### K-Katlı Çapraz Doğrulama (K-Fold Cross-Validation)
+
+Çözüm çok temiz:
+1. Veriyi en başta **Eğitim (%80)** ve **Test (%20)** diye ayır. Test kutusunu kilitle; en sona kadar açma.
+2. Eğitim verisini kendi içinde $`K`$ eşit parçaya (**kat / fold**) böl (genelde $`K = 5`$ veya $`K = 10`$).
+3. Her turda katlardan birini **doğrulama (validation)**, kalan $`K - 1`$ katı **eğitim** olarak kullan ve bir skor elde et.
+4. $`K`$ turun ortalamasını (ve standart sapmasını) al:
+
+```math
+\text{CV}_K = \frac{1}{K} \sum_{k=1}^{K} \text{skor}_k
+```
+
+Sınıflandırmada düz `KFold` yerine **`StratifiedKFold`** kullanmak çok daha iyidir; çünkü her katta sınıf oranlarını (ör. %62.7 iyi huylu / %37.3 kötü huylu) aynen korur.
+
+Wisconsin Meme Kanseri eğitim verisinde (455 örnek) `StandardScaler + KNN (K = 7)` için 5 katlı CV sonuçları: **%96.7, %97.8, %96.7, %95.6, %97.8** → ortalama **%96.92 ± %0.82**. Hiç dokunulmamış 114 örneklik test setinde ise **%95.61**.
+
+![5 katlı çapraz doğrulama akışı. Test kümesi kenarda dokunulmadan bekler; her katta farklı bir blok doğrulama olur ve 5 skorun ortalaması alınır.](images/clf_36_kfold_diagram_tr.png)
+
+*5 katlı çapraz doğrulama akışı. Test kümesi kenarda dokunulmadan bekler; her katta farklı bir blok doğrulama olur ve 5 skorun ortalaması alınır.*
+
+> [!WARNING]
+> **Ölçekleyici sızıntısına dikkat!** `StandardScaler`'ı çapraz doğrulamadan *önce* tüm eğitim verisine uygularsan, turuncu doğrulama bloğunun ortalaması ve standart sapması mavi eğitim bloklarına sızmış olur. Ölçekleyiciyi ve modeli mutlaka `Pipeline` içine koy; böylece `cross_val_score` her katta ölçekleyiciyi sıfırdan sadece mavi bloklara fit eder.
+
+### Grid Search CV: bütün kombinasyonları sistematik taramak
+
+Tek bir hiperparametre değil de birden fazla hiperparametreyi (ör. KNN'de $`K`$ ve `weights`, ya da SVM'de `C` ve `gamma`) birlikte seçmek istediğimizde **Grid Search CV** devreye girer.
+
+Mantığı adı gibi bir ızgara (grid):
+- Her hiperparametre için denenecek aday değerleri bir listeye yazarsın.
+- `GridSearchCV` bu listelerin **tüm olası kombinasyonlarını** (Kartezyen çarpımını) çıkarır.
+- Her kombinasyon için tam bir $`K`$-katlı çapraz doğrulama çalıştırır.
+- Ortalama doğrulama skoru en yüksek kombinasyonu seçer ve (varsayılan `refit=True` ile) o ayarlarla tüm eğitim verisinde son modeli otomatik eğitir.
+
+Eğer $`M`$ farklı kombinasyon ve $`K`$ kat varsa, toplamda $`M \times K + 1`$ model eğitilir. Örneğin SVM'de 4 `C` değeri × 4 `gamma` değeri = 16 kombinasyon ve 5 kat → $`16 \times 5 + 1 = 81`$ eğitim.
+
+Wisconsin verisinde iki gerçek deney:
+- **KNN (`K = 1..15` × `weights = [uniform, distance]`):** En yüksek 5 katlı CV **%97.36** (`K = 3, uniform`). Dokunulmamış testte %93.86 — küçük bir test setinde (114 tümör) tek bir tümörlük değişim neredeyse %0.9 oynatır; o yüzden tek bir sayıya değil, eğrinin düz ve kararlı bölgesine bakmak iyidir.
+- **SVM (`C ∈ {0.1, 1, 10, 100}` × `gamma ∈ {0.001, 0.01, 0.1, 1}`):** En yüksek 5 katlı CV **%97.58** (`C = 10, gamma = 0.01`). Dokunulmamış test setinde **%98.25**!
+
+![Sol: KNN için K ve ağırlık seçeneklerinin 5 katlı CV eğrisi. Sağ: RBF SVM için C × gamma ızgarasının 5 katlı CV ısı haritası; turuncu çerçeve kazanan kombinasyonu gösteriyor.](images/clf_37_grid_search_heatmap_tr.png)
+
+*Sol: KNN için K ve ağırlık seçeneklerinin 5 katlı CV eğrisi. Sağ: RBF SVM için C × gamma ızgarasının 5 katlı CV ısı haritası; turuncu çerçeve kazanan kombinasyonu gösteriyor.*
+
+Izgara çok büyüdüğünde (ör. 5 hiperparametre × 10 aday = 100.000 kombinasyon) her hücreyi tek tek denemek imkânsızlaşır. O zaman **`RandomizedSearchCV`** kullanıp ızgaradan rastgele 50–100 nokta örneklemek çoğu zaman neredeyse aynı kaliteyi çok daha kısa sürede verir.
+
+### Python uygulaması
+
+```python
+from sklearn.model_selection import GridSearchCV, StratifiedKFold, train_test_split
+from sklearn.pipeline import Pipeline
+from sklearn.preprocessing import StandardScaler
+from sklearn.svm import SVC
+
+X_train, X_test, y_train, y_test = train_test_split(
+    X, y, test_size=0.2, random_state=42, stratify=y
+)
+
+pipe = Pipeline([
+    ("scaler", StandardScaler()),
+    ("svm", SVC(kernel="rbf")),
+])
+
+param_grid = {
+    "svm__C": [0.1, 1, 10, 100],
+    "svm__gamma": [0.001, 0.01, 0.1, 1],
+}
+
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+grid = GridSearchCV(pipe, param_grid=param_grid, cv=cv, scoring="accuracy")
+grid.fit(X_train, y_train)
+
+print("En iyi ayarlar:", grid.best_params_)          # {'svm__C': 10, 'svm__gamma': 0.01}
+print("En iyi CV skoru:", round(grid.best_score_, 4)) # 0.9758
+print("Test skoru:     ", round(grid.score(X_test, y_test), 4))  # 0.9825
+```
+
+---
+
+## 13. Öneri Sistemleri (Recommendation Systems)
+
+Netflix'in sıradaki diziyi, Spotify'ın haftalık çalma listesini, e-ticaret sitelerinin "bunu alanlar şunu da aldı" kutusunu çalıştıran şey **önceden etkileşimde bulunmadığın bir öğeyi ne kadar seveceğini tahmin etmek**.
+
+Elimizde satırları kullanıcılar, sütunları ürünler/filmler olan dev bir **kullanıcı–öğe puan matrisi** $`R`$ var. Gerçek hayatta bu matrisin **%99'undan fazlası boştur** — kimse Netflix'teki 10.000 filmin hepsini izleyip puanlamıyor. Görevimiz o boşlukları akıllıca tahmin etmek.
+
+### İki temel yaklaşım
+
+| Yaklaşım | Temel fikir | Güçlü yanı | Zayıf yanı |
+| --- | --- | --- | --- |
+| **İçerik Tabanlı (Content-Based)** | *"Sevdiğin filmlere benzeyen başka filmler öner"* (tür, yönetmen, özet TF-IDF) | Başka kullanıcılara gerek yok; yeni eklenen filme hemen öneri çıkar | Hep aynı türde dönüp durur (*filtre balonu*); farklı zevk keşfedemez |
+| **İşbirlikçi Filtreleme (Collaborative Filtering)** | *"Seninle aynı şeyleri seven insanlar bunu da çok sevmiş"* | Sadece puan matrisi yeter; beklenmedik ama isabetli öneriler bulur | Yeni kullanıcı veya hiç puan almamış yeni öğede zorlanır (*cold-start*) |
+
+Büyük platformların neredeyse tamamı ikisini birleştiren **hibrit sistemler** kullanır.
+
+### İşbirlikçi Filtreleme: benzerlik ve puan tahmini
+
+İki yolu vardır:
+- **Kullanıcı tabanlı (User-Based):** Sana en çok benzeyen $`k`$ kullanıcıyı bul, onların izlediği ama senin izlemediğin filmleri ağırlıklı ortalamayla puanla.
+- **Öğe tabanlı (Item-Based):** *"Matrix'i sevenler Inception'ı da seviyor"* mantığıyla öğeler arası benzerliği hesapla. Pratikte sık tercih edilir; çünkü bir filmin kitlesi milyonlarca kullanıcının tek tek zevkine göre çok daha yavaş değişir.
+
+İki kullanıcının (veya iki öğenin) puan vektörleri arasındaki benzerliği ölçmenin en yaygın yolu **kosinüs benzerliği (cosine similarity)**:
+
+```math
+\text{sim}(u, v) = \frac{u \cdot v}{\|u\|_2\,\|v\|_2} = \frac{\sum_i r_{u,i}\,r_{v,i}}{\sqrt{\sum_i r_{u,i}^2}\;\sqrt{\sum_i r_{v,i}^2}}
+```
+
+Araları açısal olarak ne kadar yakınsa kosinüs $`1`$'e o kadar yaklaşır. (Bazı kullanıcılar herkese 4–5 verirken bazıları cimridir ve en fazla 3 verir; bu puanlama cömertliği farkını temizlemek için puanlardan kullanıcının ortalamasını çıkarıp aynı formülü uygularsan **Pearson korelasyonu** elde edersin.)
+
+En benzer $`k`$ komşuyu ($`N_k(u)`$) bulduktan sonra $`u`$ kullanıcısının $`i`$ öğesine vereceği tahmini puan, komşuların puanlarının benzerlikle ağırlıklandırılmış ortalamasıdır:
+
+```math
+\hat{r}_{u, i} = \frac{\sum_{v \in N_k(u)} \text{sim}(u, v)\, r_{v, i}}{\sum_{v \in N_k(u)} |\text{sim}(u, v)|}
+```
+
+### Elle küçük bir örnek
+
+6 kullanıcı ve 6 filmimiz olsun (ilk üçü bilim kurgu, son üçü romantik/dram). **Ali** henüz *Interstellar*'ı izlememiş (`?`). Ona önerelim mi?
+
+![Sol: 6×6 kullanıcı–film puan matrisi (Ali'nin Interstellar puanı eksik). Sağ: kosinüs benzerliği matrisi; Ali'ye en yakın iki komşu Mert (0.84) ve Can (0.81).](images/clf_38_recsys_similarity_tr.png)
+
+*Sol: 6×6 kullanıcı–film puan matrisi (Ali'nin Interstellar puanı eksik). Sağ: kosinüs benzerliği matrisi; Ali'ye en yakın iki komşu Mert (0.84) ve Can (0.81).*
+
+Ali'nin vektörü `[5, 4, 0, 1, 1, 2]`. Bilim kurgu seven Mert (`0.844`, Interstellar'a **4** vermiş) ve Can (`0.810`, Interstellar'a **5** vermiş) en yakın iki komşusu. Formüle koyalım:
+
+```math
+\hat{r}_{\text{Ali, Interstellar}} = \frac{0.844 \times 4 + 0.810 \times 5}{0.844 + 0.810} = \frac{3.376 + 4.050}{1.654} \approx \mathbf{4.49}
+```
+
+5 üzerinden **4.49** — kesinlikle önerilir! Romantik film seven Ayşe ve Ece ile benzerliği düşük (0.53 ve 0.57) olduğu için onlar bu tahmine baskın gelmedi.
+
+### Matris Ayrıştırma (Matrix Factorization / SVD): gizli zevk boyutları
+
+Milyonlarca kullanıcı ve yüz binlerce film olduğunda herkesi herkesle karşılaştırmak hem çok yavaştır hem de iki kullanıcının ortak izlediği film sayısı çoğu zaman sıfırdır.
+
+**Matris ayrıştırma** çok daha zarif bir fikirle gelir: belki de 10.000 filmin arkasında aslında sadece 20–50 tane **gizli zevk faktörü** (*latent factors*) vardır — mesela "bilim kurgu mu romantik mi", "hızlı aksiyon mu yavaş dram mı", "klasik mi modern mi" gibi. Model bu faktörlerin isimlerini bilmez; veriden kendi keşfeder!
+
+$`m \times n`$ boyutlu büyük $`R`$ matrisini iki küçük matrisin çarpımı olarak yaklaşıklarız:
+
+```math
+R \approx U V^\top, \qquad U \in \mathbb{R}^{m \times k}, \quad V \in \mathbb{R}^{n \times k}
+```
+
+- $`u_u \in \mathbb{R}^k`$: $`u`$ kullanıcısının $`k`$ gizli faktördeki zevk profili.
+- $`v_i \in \mathbb{R}^k`$: $`i`$ filminin aynı $`k`$ faktördeki içerik profili.
+- Tahmin basit bir iç çarpım (artı kullanıcının ortalama puanı): $`\hat{r}_{u,i} = \mu_u + u_u^\top v_i`$.
+
+Gerçek veride $`R`$'de boşluklar olduğu için öğrenme sadece **gözlemlenen puanlar** ($`\Omega`$) üzerinde, aşırı öğrenmeyi önleyen L2 düzenlileştirme ile yapılır:
+
+```math
+\min_{U, V} \sum_{(u, i) \in \Omega} \big(r_{u,i} - u_u^\top v_i\big)^2 + \lambda\Big(\sum_u \|u_u\|_2^2 + \sum_i \|v_i\|_2^2\Big)
+```
+
+Tam bir matriste bu ayrıştırmayı doğrudan **SVD** (*Singular Value Decomposition*) verir ($`R_{\text{merkezli}} = U S V^\top`$). 36 kullanıcı ve 12 filmlik sentetik bir veri setinde SVD'nin kendi kendine öğrendiği 2 boyutlu gizli uzaya bakalım:
+
+![Sol: SVD kullanıcıları ve filmleri aynı 2B zevk uzayına yerleştiriyor — aynı yöne bakan kullanıcı ve film yüksek iç çarpım (yüksek puan) üretir. Sağ: sadece k = 2 gizli faktör enerjinin %97.4'ünü yakalayıp RMSE'yi 0.21'e düşürüyor.](images/clf_39_recsys_svd_tr.png)
+
+*Sol: SVD kullanıcıları ve filmleri aynı 2B zevk uzayına yerleştiriyor — aynı yöne bakan kullanıcı ve film yüksek iç çarpım (yüksek puan) üretir. Sağ: sadece k = 2 gizli faktör enerjinin %97.4'ünü yakalayıp RMSE'yi 0.21'e düşürüyor.*
+
+### Pratikte karşılaşılan sorunlar ve ölçüm
+
+- **Soğuk başlangıç (Cold-Start):** Platforma yeni kaydolan kullanıcının veya yeni eklenen filmin hiç puanı yoktur. Bu yüzden yeni kullanıcıya ilk ekranda "sevdiğin 3 türü seç" diye sorulur ve içerik tabanlı/popülerlik bazlı öneriyle başlanır.
+- **Veri seyrekliği (Sparsity):** Puan matrisinin neredeyse tamamı boştur; bu yüzden düzenlileştirme ($`\lambda`$) ve örtük geri bildirimler (tıklama, izleme süresi, sepete ekleme) kritik rol oynar.
+- **Nasıl ölçülür?**
+  - Puan tahmini için **RMSE** / **MAE** (regresyon gibi).
+  - Sıralama (ilk 10 öneri) için **Precision@K**, **Recall@K** ve sıranın önemini de katan **NDCG@K**.
+
+### Python uygulaması
+
+```python
+import numpy as np
+
+# 6 kullanıcı x 6 film puan matrisi (0 = henüz izlenmemiş)
+R = np.array([
+    [5, 4, 0, 1, 1, 2],  # Ali  (? = Interstellar)
+    [5, 5, 5, 1, 2, 1],  # Can
+    [4, 5, 4, 2, 1, 2],  # Mert
+    [1, 2, 1, 5, 5, 4],  # Ayşe
+    [2, 1, 1, 4, 5, 5],  # Ece
+    [4, 4, 4, 4, 3, 4],  # Deniz
+], dtype=float)
+
+# 1) Kullanıcı-kullanıcı kosinüs benzerliği
+norms = np.linalg.norm(R, axis=1, keepdims=True)
+sim = (R @ R.T) / (norms @ norms.T)
+
+# Ali (0) için Interstellar (2) puan tahmini — en benzer 2 komşu: Mert (2) ve Can (1)
+rated_by = np.where(R[:, 2] > 0)[0]
+top2 = rated_by[np.argsort(sim[0, rated_by])[-2:]]
+pred = np.dot(sim[0, top2], R[top2, 2]) / np.sum(np.abs(sim[0, top2]))
+print("Tahmini Interstellar puanı:", round(pred, 2))  # 4.49
+
+# 2) Truncated SVD ile k = 2 gizli faktörlü yeniden kurulum
+user_means = np.where(R > 0, R, np.nan)
+row_mean = np.nanmean(user_means, axis=1, keepdims=True)
+R_filled = np.where(R > 0, R, row_mean) - row_mean
+U, S, Vt = np.linalg.svd(R_filled, full_matrices=False)
+R_svd = row_mean + (U[:, :2] * S[:2]) @ Vt[:2, :]
+print("SVD tahmini (Ali, Interstellar):", round(R_svd[0, 2], 2))
+```
+
+---
 
 ## Kendini sına
 
@@ -963,5 +1765,47 @@ Sonsal, olabilirlik × önseldir. İyi huylu tümörler daha yaygın (önsel 0.6
 <summary>7. Bir modelin precision değeri 1.000, recall değeri 0.953. Ne tür bir hata yapmış?</summary>
 
 Precision 1, hiç yanlış pozitif yok demektir: her “kötü huylu” kararı doğruydu. Recall değerinin 1’in altında olması yanlış negatif demektir: bazı kötü huylu tümörleri kaçırdı (burada 43 tümörün 2’si).
+
+</details>
+
+<details>
+<summary>8. K-means'te WCSS en küçük olsun diye K değerini sürekli artırırsak ne olur?</summary>
+
+Her nokta kendi başına bir küme olur ($`K = n`$) ve WCSS sıfırlanır; ama ortada özetleme ya da gruplama kalmaz. Bu yüzden K seçerken sadece WCSS'nin minimumuna değil, dirsek noktasına ve silhouette skoruna bakarız.
+
+</details>
+
+<details>
+<summary>9. Hiyerarşik kümelemede dendrogramın yatay ekseninde yan yana duran iki nokta mutlaka birbirine çok yakın mıdır?</summary>
+
+Hayır. Yatay sıralama sadece çizim tercihidir; bir alt dal ters çevrilse de kümeleme değişmez. Yakınlığı anlamak için iki noktayı bağlayan yatay çizginin **dikey yüksekliğine** bakmalısın.
+
+</details>
+
+<details>
+<summary>10. Duygu analizinde tüm stopwords kelimelerini körlemesine silmek neden tehlikelidir?</summary>
+
+`not` (veya Türkçede olumsuzluk taşıyan kelimeler) stopword listesinde olabilir. Onu silince `"not good"` bir anda `"good"` hâline gelir ve yorumun anlamı tam tersine döner.
+
+</details>
+
+<details>
+<summary>11. PCA'da `whiten=True` vermek, öncesinde `StandardScaler` kullanma ihtiyacını ortadan kaldırır mı?</summary>
+
+Hayır. `StandardScaler` PCA'dan *önce* girdi sütunlarının ölçek farkını dengeler. `whiten=True` ise PCA'dan *sonra* çıkan bileşenleri $`\sqrt{\lambda_k}`$'ye bölerek her bileşenin varyansını 1 yapar.
+
+</details>
+
+<details>
+<summary>12. `StandardScaler`'ı çapraz doğrulamadan önce tüm eğitim verisine fit edersen ne yanlış gider?</summary>
+
+Doğrulama katındaki örneklerin ortalama ve standart sapması eğitim katlarına sızar (*data leakage*). Ölçekleyiciyi `Pipeline` içine koyarsan her katta sadece o katın eğitim verisiyle fit edilir.
+
+</details>
+
+<details>
+<summary>13. Yeni açılan bir film platformunda hiç puanlanmamış yeni bir filme işbirlikçi filtreleme neden öneri üretemez?</summary>
+
+Çünkü işbirlikçi filtreleme sadece kullanıcı–öğe etkileşim matrisinden öğrenir; yeni filmin satırı/sütunu tamamen boştur (*cold-start* problemi). Bu durumda içerik tabanlı özellikler (tür, oyuncu, özet) veya popülerlik devreye girer.
 
 </details>

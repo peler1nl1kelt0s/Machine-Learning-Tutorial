@@ -1,0 +1,172 @@
+{
+  "task": "review sentiment: 0=negative, 1=positive; no demographic inference",
+  "seed": 42,
+  "audit": {
+    "raw_rows": 3000,
+    "conflicting_rows_removed": 0,
+    "duplicate_rows_removed": 21,
+    "clean_rows": 2979,
+    "source_sha256": {
+      "amazon_cells_labelled.txt": "47003fc0a0d4840b00e96e715b6189bad09e7443a3da41c4cbe12ffc79f86ae3",
+      "imdb_labelled.txt": "aef2e49e3da25714d61175e3a6e68eeef74a20a2f914318dc3be9947ea86512d",
+      "yelp_labelled.txt": "c76468b7b5c6e56a0804d728345c5f84aa2142ddb214420f61cc9cfd4c00d2ea"
+    }
+  },
+  "train_rows": 2383,
+  "test_rows": 596,
+  "train_class_counts": {
+    "0": 1193,
+    "1": 1190
+  },
+  "test_class_counts": {
+    "0": 298,
+    "1": 298
+  },
+  "split_sha256": {
+    "train_keys": "59aa96250b826cab559f796cfe3d59ab716c0645b150641ad7969f4fe1510598",
+    "test_keys": "ace84c543a086ffc4c598c7bb44c0d80eb8a67c31f2b83b4652f1b87afa9d81f"
+  },
+  "candidates": [
+    {
+      "name": "Dummy",
+      "cv_accuracy": 0.5006289308176101,
+      "cv_macro_f1": 0.3336126629422719,
+      "cv_macro_f1_std": 0.00022807167065022298,
+      "fold_macro_f1": [
+        0.33379888268156427,
+        0.33379888268156427,
+        0.33379888268156427,
+        0.3333333333333333,
+        0.3333333333333333
+      ]
+    },
+    {
+      "name": "Count + GaussianNB (dense diagnostic)",
+      "cv_accuracy": 0.6693162799711079,
+      "cv_macro_f1": 0.6582408438735357,
+      "cv_macro_f1_std": 0.017972178850186996,
+      "fold_macro_f1": [
+        0.6424661454666043,
+        0.6708911322536132,
+        0.6875169902804454,
+        0.6470458997784654,
+        0.6432840515885498
+      ]
+    },
+    {
+      "name": "Count + MultinomialNB",
+      "cv_accuracy": 0.8078034987579936,
+      "cv_macro_f1": 0.8076820904323343,
+      "cv_macro_f1_std": 0.02720626393721847,
+      "fold_macro_f1": [
+        0.8196866868274844,
+        0.8406701592771,
+        0.7670949664149067,
+        0.8256233255504994,
+        0.7853353140916808
+      ]
+    },
+    {
+      "name": "Word TF-IDF + LogisticRegression",
+      "cv_accuracy": 0.8132559942215879,
+      "cv_macro_f1": 0.8131963502416891,
+      "cv_macro_f1_std": 0.031803397187784174,
+      "fold_macro_f1": [
+        0.8259927480496649,
+        0.8595363146906934,
+        0.7651485844909443,
+        0.8213647100377491,
+        0.793939393939394
+      ]
+    },
+    {
+      "name": "Word TF-IDF + LinearSVC",
+      "cv_accuracy": 0.8107341049627397,
+      "cv_macro_f1": 0.8106740925932998,
+      "cv_macro_f1_std": 0.020352842860789092,
+      "fold_macro_f1": [
+        0.8176068563894078,
+        0.8448575949367089,
+        0.7903333567761446,
+        0.8108943232983137,
+        0.7896783315659244
+      ]
+    },
+    {
+      "name": "Word+char TF-IDF + LogisticRegression",
+      "cv_accuracy": 0.838015080245935,
+      "cv_macro_f1": 0.8379688781210556,
+      "cv_macro_f1_std": 0.019049510298373176,
+      "fold_macro_f1": [
+        0.8427424140523005,
+        0.8700203930944763,
+        0.8113132911392404,
+        0.8339097289394762,
+        0.8318585633797841
+      ]
+    }
+  ],
+  "selected_by_train_cv": "Word+char TF-IDF + LogisticRegression",
+  "test": {
+    "accuracy": 0.8389261744966443,
+    "balanced_accuracy": 0.8389261744966443,
+    "macro_f1": 0.838880816409286,
+    "confusion_matrix": [
+      [
+        255,
+        43
+      ],
+      [
+        53,
+        245
+      ]
+    ],
+    "classification_report": {
+      "negative": {
+        "precision": 0.827922077922078,
+        "recall": 0.8557046979865772,
+        "f1-score": 0.8415841584158416,
+        "support": 298.0
+      },
+      "positive": {
+        "precision": 0.8506944444444444,
+        "recall": 0.8221476510067114,
+        "f1-score": 0.8361774744027304,
+        "support": 298.0
+      },
+      "accuracy": 0.8389261744966443,
+      "macro avg": {
+        "precision": 0.8393082611832612,
+        "recall": 0.8389261744966443,
+        "f1-score": 0.838880816409286,
+        "support": 596.0
+      },
+      "weighted avg": {
+        "precision": 0.8393082611832612,
+        "recall": 0.8389261744966443,
+        "f1-score": 0.838880816409286,
+        "support": 596.0
+      }
+    }
+  },
+  "dummy_test_accuracy": 0.5,
+  "word_tfidf_storage": {
+    "shape": [
+      2383,
+      4457
+    ],
+    "nnz": 32613,
+    "density": 0.003070605857378629,
+    "data_dtype": "float64",
+    "index_dtype": "int32",
+    "dense_bytes": 84968248,
+    "csr_bytes": 400892
+  },
+  "invalid_score_call_error": "X has 1 features, but GaussianNB is expecting 3 features as input.",
+  "versions": {
+    "numpy": "1.26.4",
+    "pandas": "2.3.3",
+    "scipy": "1.13.1",
+    "scikit-learn": "1.7.2"
+  }
+}
